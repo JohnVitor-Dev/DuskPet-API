@@ -1,10 +1,11 @@
 const express = require('express');
 const app = express();
 
-const userRoute = require('./api/routes/userRoute');
-const testRoute = require('./api/routes/testRoute');
+const loginRoute = require('./api/routes/loginRoute');
+const registerRoute = require('./api/routes/registerRoute');
 
-app.use('/users', userRoute);
-app.use('/test', testRoute);
+app.use(express.json());
+app.use('/login', loginRoute);
+app.use('/register', registerRoute);
 
 module.exports = app;

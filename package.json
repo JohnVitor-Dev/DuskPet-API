@@ -1,9 +1,13 @@
 {
   "dependencies": {
+    "@prisma/client": "^6.15.0",
+    "bcryptjs": "^3.0.2",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.18.0",
-    "pg": "^8.16.3"
+    "pg": "^8.16.3",
+    "prisma": "^6.15.0"
   },
   "name": "duskpet-api",
   "version": "1.0.0",
@@ -12,10 +16,7 @@
     "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/JohnVitor-Dev/DuskPet-API.git"
-  },
+  "repository": "git+https://github.com/JohnVitor-Dev/DuskPet-API.git",
   "author": "JohnVitor-Dev",
   "license": "ISC",
   "bugs": {
