@@ -20,7 +20,7 @@ const register = async (req, res) => {
             return res.status(400).json({ error: 'User already exists' });
         }
 
-        const hashedPassword = bcrypt.hashSync(password, 8);
+        const hashedPassword = await bcrypt.hash(password, 8);
         const newUser = await prisma.clientes.create({
             data: {
                 nome: name,
