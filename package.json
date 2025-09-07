@@ -7,14 +7,17 @@
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.18.0",
     "pg": "^8.16.3",
-    "prisma": "^6.15.0"
+    "prisma": "^6.15.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   },
   "name": "duskpet-api",
   "version": "1.0.0",
   "main": "app.js",
   "scripts": {
     "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon index.js"
   },
   "repository": "git+https://github.com/JohnVitor-Dev/DuskPet-API.git",
   "author": "JohnVitor-Dev",
@@ -23,5 +26,8 @@
     "url": "https://github.com/JohnVitor-Dev/DuskPet-API/issues"
   },
   "homepage": "https://github.com/JohnVitor-Dev/DuskPet-API#readme",
-  "description": ""
+  "description": "",
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
 }
