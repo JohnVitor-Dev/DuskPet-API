@@ -5,8 +5,8 @@ async function main() {
     // Buscar todos os clientes
     const clientes = await prisma.clientes.findMany({
         include: {
-            pets: true,            // incluir os pets de cada cliente
-            agendamentos: true,    // incluir os agendamentos de cada cliente
+            pets: true,
+            agendamentos: true,
         },
     });
 
