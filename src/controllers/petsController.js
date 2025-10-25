@@ -1,7 +1,5 @@
-const { PrismaClient } = require('@prisma/client');
+const prisma = require('../config/prisma');
 const logger = require('../config/logger');
-
-const prisma = new PrismaClient();
 
 const createPet = async (req, res) => {
     const clienteId = req.user.userId;

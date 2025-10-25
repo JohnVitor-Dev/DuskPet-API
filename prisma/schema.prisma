@@ -16,6 +16,15 @@ model administradores {
   updated_at DateTime? @default(now()) @db.Timestamptz(6)
 }
 
+model atendentes {
+  id         Int       @id @default(autoincrement())
+  nome       String    @db.VarChar(255)
+  email      String    @unique @db.VarChar(255)
+  senha_hash String    @db.VarChar(255)
+  created_at DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at DateTime? @default(now()) @db.Timestamptz(6)
+}
+
 model agendamentos {
   id                  Int                   @id @default(autoincrement())
   cliente_id          Int

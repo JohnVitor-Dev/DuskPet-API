@@ -20,8 +20,9 @@ const petValidation = [
         .withMessage('Raça deve ter no máximo 100 caracteres'),
     body('sexo')
         .optional()
-        .isIn(['Macho', 'Fêmea'])
-        .withMessage('Sexo deve ser "Macho" ou "Fêmea"'),
+        .isIn(['Macho', 'Fêmea', 'F_mea'])
+        .withMessage('Sexo deve ser "Macho" ou "Fêmea"')
+        .customSanitizer(value => value === 'Fêmea' ? 'F_mea' : value),
     body('data_nascimento')
         .optional()
         .isISO8601()
@@ -60,8 +61,9 @@ const petUpdateValidation = [
         .withMessage('Raça deve ter no máximo 100 caracteres'),
     body('sexo')
         .optional()
-        .isIn(['Macho', 'Fêmea'])
-        .withMessage('Sexo deve ser "Macho" ou "Fêmea"'),
+        .isIn(['Macho', 'Fêmea', 'F_mea'])
+        .withMessage('Sexo deve ser "Macho" ou "Fêmea"')
+        .customSanitizer(value => value === 'Fêmea' ? 'F_mea' : value),
     body('data_nascimento')
         .optional()
         .isISO8601()

@@ -29,9 +29,15 @@ const generalLimiter = rateLimit({
 
 const loginRoute = require('./api/routes/loginRoute');
 const registerRoute = require('./api/routes/registerRoute');
+const veterinariosRoute = require('./api/routes/veterinariosRoute');
+const adminRoute = require('./api/routes/adminRoute');
+const atendenteRoute = require('./api/routes/atendenteRoute');
 
 const profileRoute = require('./api/routes/profileRoute');
 const petsRoute = require('./api/routes/petsRoute');
+const agendamentosRoute = require('./api/routes/agendamentosRoute');
+const historicosRoute = require('./api/routes/historicosRoute');
+const produtosRoute = require('./api/routes/produtosRoute');
 
 const verifyToken = require('./middlewares/verifyToken');
 
@@ -45,11 +51,17 @@ app.get('/', (req, res) => {
 
 app.use('/login', loginLimiter, loginRoute);
 app.use('/register', registerLimiter, registerRoute);
+app.use('/veterinarios', veterinariosRoute);
+app.use('/admin', adminRoute);
+app.use('/atendente', atendenteRoute);
 
 app.use('/protected', verifyToken);
 
 app.use('/protected/profile', profileRoute);
 app.use('/protected/pets', petsRoute);
+app.use('/protected/agendamentos', agendamentosRoute);
+app.use('/protected/historicos', historicosRoute);
+app.use('/protected/produtos', produtosRoute);
 
 
 module.exports = app;
