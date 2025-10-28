@@ -31,20 +31,20 @@ const generalLimiter = rateLimit({
     legacyHeaders: false,
 });
 
-const loginRoute = require('./api/routes/loginRoute');
-const registerRoute = require('./api/routes/registerRoute');
-const veterinariosRoute = require('./api/routes/veterinariosRoute');
-const adminRoute = require('./api/routes/adminRoute');
-const atendenteRoute = require('./api/routes/atendenteRoute');
+const loginRoute = require('./src/routes/loginRoute');
+const registerRoute = require('./src/routes/registerRoute');
+const veterinariosRoute = require('./src/routes/veterinariosRoute');
+const adminRoute = require('./src/routes/adminRoute');
+const atendenteRoute = require('./src/routes/atendenteRoute');
 
-const profileRoute = require('./api/routes/profileRoute');
-const petsRoute = require('./api/routes/petsRoute');
-const agendamentosRoute = require('./api/routes/agendamentosRoute');
-const historicosRoute = require('./api/routes/historicosRoute');
-const produtosRoute = require('./api/routes/produtosRoute');
+const profileRoute = require('./src/routes/profileRoute');
+const petsRoute = require('./src/routes/petsRoute');
+const agendamentosRoute = require('./src/routes/agendamentosRoute');
+const historicosRoute = require('./src/routes/historicosRoute');
+const produtosRoute = require('./src/routes/produtosRoute');
 
-const verifyToken = require('./middlewares/verifyToken');
-const verifyCliente = require('./middlewares/verifyCliente');
+const verifyToken = require('./src/middlewares/verifyToken');
+const verifyCliente = require('./src/middlewares/verifyCliente');
 
 app.use(generalLimiter);
 

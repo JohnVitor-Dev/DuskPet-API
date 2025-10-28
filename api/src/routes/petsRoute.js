@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 
-const petsController = require('../../controllers/petsController');
-const { petValidation, petUpdateValidation, petIdValidation, validate } = require('../../validators/petValidator');
-const upload = require('../../config/multer');
-const handleMulterError = require('../../middlewares/handleMulterError');
+const petsController = require('../controllers/petsController');
+const { petValidation, petUpdateValidation, petIdValidation, validate } = require('../validators/petValidator');
+const upload = require('../config/multer');
+const handleMulterError = require('../middlewares/handleMulterError');
 
 router.post('/', upload.single('imagem'), handleMulterError, petValidation, validate, petsController.createPet);
 router.get('/', petsController.getPets);

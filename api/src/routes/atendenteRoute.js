@@ -1,13 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const atendenteController = require('../../controllers/atendenteController');
-const verifyAtendente = require('../../middlewares/verifyAtendente');
+const atendenteController = require('../controllers/atendenteController');
+const verifyAtendente = require('../middlewares/verifyAtendente');
 const { validationResult } = require('express-validator');
 const {
     loginAtendenteValidation,
     updateStatusValidation,
     buscaClienteValidation
-} = require('../../validators/atendenteValidator');
+} = require('../validators/atendenteValidator');
 
 const validate = (req, res, next) => {
     const errors = validationResult(req);

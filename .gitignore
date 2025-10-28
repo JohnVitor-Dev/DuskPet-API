@@ -44,3 +44,4 @@ node_modules/
 # Uploaded files (images, documents, etc.)
 uploads/
 !uploads/.gitkeep
+.vercel

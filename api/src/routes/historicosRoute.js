@@ -1,14 +1,14 @@
 const express = require('express');
 const router = express.Router();
 
-const historicosController = require('../../controllers/historicosController');
+const historicosController = require('../controllers/historicosController');
 const {
     historicoValidation,
     historicoUpdateValidation,
     historicoIdValidation,
     petIdValidation,
     validate
-} = require('../../validators/historicoValidator');
+} = require('../validators/historicoValidator');
 
 router.post('/', historicoValidation, validate, historicosController.createHistorico);
 router.get('/pet/:pet_id', petIdValidation, validate, historicosController.getHistoricosByPet);

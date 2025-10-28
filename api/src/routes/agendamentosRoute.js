@@ -1,14 +1,14 @@
 const express = require('express');
 const router = express.Router();
 
-const agendamentosController = require('../../controllers/agendamentosController');
+const agendamentosController = require('../controllers/agendamentosController');
 const {
     agendamentoValidation,
     agendamentoUpdateValidation,
     agendamentoIdValidation,
     horariosDisponiveisValidation,
     validate
-} = require('../../validators/agendamentoValidator');
+} = require('../validators/agendamentoValidator');
 
 router.post('/', agendamentoValidation, validate, agendamentosController.createAgendamento);
 router.get('/', agendamentosController.getAgendamentos);

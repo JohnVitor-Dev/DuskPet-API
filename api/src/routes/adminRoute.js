@@ -1,14 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const adminController = require('../../controllers/adminController');
-const verifyAdmin = require('../../middlewares/verifyAdmin');
+const adminController = require('../controllers/adminController');
+const verifyAdmin = require('../middlewares/verifyAdmin');
 const { validationResult } = require('express-validator');
 const {
     loginAdminValidation,
     createVeterinarioValidation,
     updateVeterinarioValidation,
     relatorioValidation
-} = require('../../validators/adminValidator');
+} = require('../validators/adminValidator');
 
 const validate = (req, res, next) => {
     const errors = validationResult(req);

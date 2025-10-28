@@ -1,15 +1,15 @@
 const express = require('express');
 const router = express.Router();
 
-const produtosController = require('../../controllers/produtosController');
-const verifyAtendente = require('../../middlewares/verifyAtendente');
+const produtosController = require('../controllers/produtosController');
+const verifyAtendente = require('../middlewares/verifyAtendente');
 const {
     produtoValidation,
     produtoUpdateValidation,
     ajusteEstoqueValidation,
     produtoIdValidation,
     validate
-} = require('../../validators/produtoValidator');
+} = require('../validators/produtoValidator');
 
 router.post('/', verifyAtendente, produtoValidation, validate, produtosController.createProduto);
 router.get('/', produtosController.getProdutos);
