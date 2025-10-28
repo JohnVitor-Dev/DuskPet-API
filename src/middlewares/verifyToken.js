@@ -7,7 +7,7 @@ const verifyToken = (req, res, next) => {
 
     if (!token) {
         logger.warn('Token não fornecido', { ip: req.ip, path: req.path });
-        return res.status(401).json({ message: 'No token provided' });
+        return res.status(401).json({ message: 'Token não fornecido' });
     }
 
     try {
@@ -15,7 +15,7 @@ const verifyToken = (req, res, next) => {
 
         if (!decoded) {
             logger.warn('Falha ao decodificar token', { ip: req.ip, path: req.path });
-            return res.status(401).json({ message: 'Failed to authenticate token' });
+            return res.status(401).json({ message: 'Falha ao autenticar token' });
         }
 
         req.user = decoded;
@@ -28,14 +28,14 @@ const verifyToken = (req, res, next) => {
         });
 
         if (error.name === 'TokenExpiredError') {
-            return res.status(401).json({ message: 'Token expired' });
+            return res.status(401).json({ message: 'Token expirado' });
         }
 
         if (error.name === 'JsonWebTokenError') {
-            return res.status(401).json({ message: 'Invalid token' });
+            return res.status(401).json({ message: 'Token inválido' });
         }
 
-        return res.status(401).json({ message: 'Failed to authenticate token' });
+        return res.status(401).json({ message: 'Falha ao autenticar token' });
     }
 };
 

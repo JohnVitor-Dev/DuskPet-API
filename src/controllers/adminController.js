@@ -5,7 +5,7 @@ const logger = require('../config/logger');
 
 const loginAdmin = async (req, res) => {
     try {
-        const { email, senha } = req.body;
+        const { email, password } = req.body;
 
         const admin = await prisma.administradores.findUnique({
             where: { email }
@@ -15,7 +15,7 @@ const loginAdmin = async (req, res) => {
             return res.status(401).json({ message: 'Credenciais inválidas' });
         }
 
-        const senhaValida = await bcrypt.compare(senha, admin.senha_hash);
+        const senhaValida = await bcrypt.compare(password, admin.senha_hash);
 
         if (!senhaValida) {
             return res.status(401).json({ message: 'Credenciais inválidas' });
@@ -25,14 +25,16 @@ const loginAdmin = async (req, res) => {
             { id: admin.id, tipo: 'admin' },
             process.env.JWT_SECRET_KEY,
             { expiresIn: '8h' }
-        ); logger.info(`Admin ${admin.email} realizou login`);
+        );
+
+        logger.info(`Admin ${admin.email} realizou login`);
 
         res.json({
             token,
-            admin: {
-                id: admin.id,
-                nome: admin.nome,
-                email: admin.email
+            user: {
+                name: admin.nome,
+                email: admin.email,
+                id: admin.id
             }
         });
     } catch (error) {

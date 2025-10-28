@@ -89,7 +89,9 @@ model pets {
   raca                String?               @db.VarChar(100)
   sexo                tipo_sexo?
   data_nascimento     DateTime?             @db.Date
-  imagem_url          String?               @db.VarChar(255)
+  imagem              Bytes?
+  imagem_tipo         String?               @db.VarChar(50)
+  imagem_nome         String?               @db.VarChar(255)
   created_at          DateTime?             @default(now()) @db.Timestamptz(6)
   updated_at          DateTime?             @default(now()) @db.Timestamptz(6)
   agendamentos        agendamentos[]

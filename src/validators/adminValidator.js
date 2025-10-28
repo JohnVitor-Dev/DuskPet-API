@@ -2,7 +2,7 @@ const { body, query } = require('express-validator');
 
 const loginAdminValidation = [
     body('email').isEmail().withMessage('Email inválido'),
-    body('senha').notEmpty().withMessage('Senha é obrigatória')
+    body('password').notEmpty().withMessage('Senha é obrigatória')
 ];
 
 const createVeterinarioValidation = [

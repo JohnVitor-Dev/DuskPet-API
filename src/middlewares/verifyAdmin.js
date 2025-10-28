@@ -11,11 +11,12 @@ const verifyAdmin = (req, res, next) => {
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
 
-        if (decoded.tipo !== 'admin') {
+        const isAdmin = decoded.tipo === 'admin' || decoded.role === 'admin';
+        if (!isAdmin) {
             return res.status(403).json({ message: 'Acesso negado: apenas administradores' });
         }
 
-        req.adminId = decoded.id;
+        req.adminId = decoded.id || decoded.userId;
         next();
     } catch (error) {
         logger.error(`Erro ao verificar token admin: ${error.message}`);

@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Upload de Imagem - DuskPet API</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        input[type="text"],
+        input[type="date"],
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="date"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px dashed #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        input[type="file"]:hover {
+            border-color: #667eea;
+        }
+
+        .preview-container {
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            background: #f5f5f5;
+            display: none;
+        }
+
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            display: block;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            display: block;
+        }
+
+        .result h3 {
+            margin-bottom: 10px;
+        }
+
+        .pet-info {
+            margin-top: 15px;
+        }
+
+        .pet-info p {
+            margin: 5px 0;
+        }
+
+        .required {
+            color: #e74c3c;
+        }
+
+        .token-info {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .token-info p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #856404;
+        }
+
+        .token-input {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🐾 DuskPet API</h1>
+        <p class="subtitle">Teste de Upload de Imagem de Pet</p>
+
+        <div class="token-info">
+            <p><strong>⚠️ Token JWT Necessário</strong></p>
+            <p>Faça login primeiro e cole seu token abaixo:</p>
+            <div class="token-input">
+                <label>Token JWT:</label>
+                <input type="text" id="tokenInput" placeholder="Cole seu token JWT aqui">
+            </div>
+        </div>
+
+        <form id="petForm" enctype="multipart/form-data">
+            <div class="form-group">
+                <label>Nome do Pet <span class="required">*</span></label>
+                <input type="text" name="nome" id="nome" placeholder="Ex: Rex" required>
+            </div>
+
+            <div class="form-group">
+                <label>Espécie <span class="required">*</span></label>
+                <input type="text" name="especie" id="especie" placeholder="Ex: Cachorro" required>
+            </div>
+
+            <div class="form-group">
+                <label>Raça</label>
+                <input type="text" name="raca" id="raca" placeholder="Ex: Labrador">
+            </div>
+
+            <div class="form-group">
+                <label>Sexo</label>
+                <select name="sexo" id="sexo">
+                    <option value="">Selecione o sexo</option>
+                    <option value="Macho">Macho</option>
+                    <option value="Fêmea">Fêmea</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Data de Nascimento</label>
+                <input type="date" name="data_nascimento" id="data_nascimento">
+            </div>
+
+            <div class="form-group">
+                <label>Foto do Pet</label>
+                <input type="file" name="imagem" id="imagem" accept="image/*">
+                <div class="preview-container" id="previewContainer"></div>
+            </div>
+
+            <button type="submit" id="submitBtn">Cadastrar Pet</button>
+        </form>
+
+        <div class="result" id="result"></div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000';
+
+        // Preview da imagem
+        document.getElementById('imagem').addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            const previewContainer = document.getElementById('previewContainer');
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    previewContainer.innerHTML = `<img src="${e.target.result}" class="preview-image" alt="Preview">`;
+                };
+                reader.readAsDataURL(file);
+            } else {
+                previewContainer.innerHTML = '';
+            }
+        });
+
+        // Salvar token no localStorage
+        document.getElementById('tokenInput').addEventListener('input', function (e) {
+            localStorage.setItem('duskpet_token', e.target.value);
+        });
+
+        // Carregar token do localStorage
+        const savedToken = localStorage.getItem('duskpet_token');
+        if (savedToken) {
+            document.getElementById('tokenInput').value = savedToken;
+        }
+
+        // Enviar formulário
+        document.getElementById('petForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const token = document.getElementById('tokenInput').value.trim();
+            const submitBtn = document.getElementById('submitBtn');
+            const resultDiv = document.getElementById('result');
+
+            if (!token) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = '<h3>❌ Erro</h3><p>Por favor, forneça um token JWT válido.</p>';
+                return;
+            }
+
+            // Preparar FormData
+            const formData = new FormData(e.target);
+
+            // Desabilitar botão
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Cadastrando...';
+
+            try {
+                const response = await fetch(`${API_URL}/protected/pets`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ Pet Cadastrado com Sucesso!</h3>
+                        <div class="pet-info">
+                            <p><strong>ID:</strong> ${data.id}</p>
+                            <p><strong>Nome:</strong> ${data.nome}</p>
+                            <p><strong>Espécie:</strong> ${data.especie}</p>
+                            ${data.raca ? `<p><strong>Raça:</strong> ${data.raca}</p>` : ''}
+                            ${data.sexo ? `<p><strong>Sexo:</strong> ${data.sexo}</p>` : ''}
+                            ${data.data_nascimento ? `<p><strong>Data de Nascimento:</strong> ${new Date(data.data_nascimento).toLocaleDateString('pt-BR')}</p>` : ''}
+                            ${data.imagem_url ? `
+                                <p><strong>Imagem:</strong></p>
+                                <img src="${API_URL}${data.imagem_url}" class="preview-image" alt="${data.nome}" style="margin-top: 10px;">
+                            ` : ''}
+                        </div>
+                    `;
+
+                    // Limpar formulário
+                    e.target.reset();
+                    document.getElementById('previewContainer').innerHTML = '';
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `
+                        <h3>❌ Erro ao Cadastrar Pet</h3>
+                        <p>${data.error || 'Erro desconhecido'}</p>
+                        ${data.details ? `<pre>${JSON.stringify(data.details, null, 2)}</pre>` : ''}
+                    `;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <h3>❌ Erro de Conexão</h3>
+                    <p>Não foi possível conectar à API. Verifique se o servidor está rodando.</p>
+                    <p><small>${error.message}</small></p>
+                `;
+            } finally {
+                // Reabilitar botão
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Cadastrar Pet';
+            }
+        });
+    </script>
+</body>
+
+</html>

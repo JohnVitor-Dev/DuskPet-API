@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DuskPet API - Perfil</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .profile-card {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .avatar {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            color: white;
+        }
+
+        .profile-info h2 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .profile-info p {
+            color: #666;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .info-item {
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+        }
+
+        .info-label {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 1.1em;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-right: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .edit-form {
+            display: none;
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+        }
+
+        .edit-form.active {
+            display: block;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="menu.html" class="back-btn">← Voltar ao Menu</a>
+
+        <div class="header">
+            <h1>👤 Meu Perfil</h1>
+        </div>
+
+        <div class="alert" id="alert"></div>
+
+        <div id="loadingDiv" class="loading">
+            Carregando perfil...
+        </div>
+
+        <div id="profileView" style="display: none;">
+            <div class="profile-card">
+                <div class="profile-header">
+                    <div class="avatar" id="avatarIcon">👤</div>
+                    <div class="profile-info">
+                        <h2 id="profileName">-</h2>
+                        <p id="profileEmail">-</p>
+                    </div>
+                </div>
+
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">Telefone</div>
+                        <div class="info-value" id="profilePhone">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Membro desde</div>
+                        <div class="info-value" id="profileCreated">-</div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn" onclick="toggleEditForm()">Editar Perfil</button>
+        </div>
+
+        <div id="editForm" class="edit-form">
+            <h3 style="margin-bottom: 20px; color: #333;">Editar Informações</h3>
+            <form onsubmit="handleUpdateProfile(event)">
+                <div class="form-group">
+                    <label>Nome:</label>
+                    <input type="text" id="editName" required minlength="3">
+                </div>
+                <div class="form-group">
+                    <label>Email:</label>
+                    <input type="email" id="editEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Telefone:</label>
+                    <input type="tel" id="editPhone" required>
+                </div>
+                <div class="form-group">
+                    <label>Nova Senha (deixe em branco para não alterar):</label>
+                    <input type="password" id="editPassword" minlength="6" placeholder="Opcional">
+                </div>
+                <button type="submit" class="btn" id="updateBtn">Salvar Alterações</button>
+                <button type="button" class="btn btn-secondary" onclick="toggleEditForm()">Cancelar</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000';
+        let profileData = null;
+
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.textContent = message;
+            alert.className = `alert ${type} show`;
+            setTimeout(() => alert.classList.remove('show'), 5000);
+        }
+
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const userType = localStorage.getItem('userType');
+            if (!token) {
+                alert('Você precisa fazer login primeiro!');
+                window.location.href = 'auth.html';
+                return false;
+            }
+            if (userType !== 'cliente') {
+                alert('Acesso restrito aos clientes.');
+                if (userType === 'admin') window.location.href = 'admin.html';
+                else if (userType === 'atendente') window.location.href = 'atendente.html';
+                else window.location.href = 'auth.html';
+                return false;
+            }
+            return true;
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('pt-BR');
+        }
+
+        function getInitials(name) {
+            return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        }
+
+        async function loadProfile() {
+            if (!checkAuth()) return;
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/protected/profile`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.status === 401) {
+                    alert('Sessão expirada. Faça login novamente.');
+                    localStorage.clear();
+                    window.location.href = 'auth.html';
+                    return;
+                }
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    profileData = data;
+                    displayProfile(data);
+                } else {
+                    showAlert('Erro ao carregar perfil', 'error');
+                }
+            } catch (error) {
+                showAlert('Erro de conexão com o servidor', 'error');
+            } finally {
+                document.getElementById('loadingDiv').style.display = 'none';
+            }
+        }
+
+        function displayProfile(data) {
+            document.getElementById('profileName').textContent = data.name;
+            document.getElementById('profileEmail').textContent = data.email;
+            document.getElementById('profilePhone').textContent = data.phone;
+            document.getElementById('profileCreated').textContent = data.created_at ? formatDate(data.created_at) : '-';
+            document.getElementById('avatarIcon').textContent = getInitials(data.name);
+            document.getElementById('profileView').style.display = 'block';
+
+            document.getElementById('editName').value = data.name;
+            document.getElementById('editEmail').value = data.email;
+            document.getElementById('editPhone').value = data.phone;
+        }
+
+        function toggleEditForm() {
+            const editForm = document.getElementById('editForm');
+            const profileView = document.getElementById('profileView');
+
+            if (editForm.classList.contains('active')) {
+                editForm.classList.remove('active');
+                profileView.style.display = 'block';
+            } else {
+                editForm.classList.add('active');
+                profileView.style.display = 'none';
+            }
+        }
+
+        async function handleUpdateProfile(e) {
+            e.preventDefault();
+            const btn = document.getElementById('updateBtn');
+            btn.disabled = true;
+            btn.textContent = 'Salvando...';
+
+            try {
+                const token = localStorage.getItem('token');
+                const updateData = {
+                    name: document.getElementById('editName').value,
+                    email: document.getElementById('editEmail').value,
+                    phone: document.getElementById('editPhone').value
+                };
+
+                const password = document.getElementById('editPassword').value;
+                if (password) {
+                    updateData.password = password;
+                }
+
+                const response = await fetch(`${API_URL}/protected/profile`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(updateData)
+                });
+
+                if (response.status === 401) {
+                    alert('Sessão expirada. Faça login novamente.');
+                    localStorage.clear();
+                    window.location.href = 'auth.html';
+                    return;
+                }
+
+                let data = {};
+                try { data = await response.json(); } catch (_) { }
+
+                if (response.ok) {
+                    localStorage.setItem('userName', data.name);
+                    showAlert('Perfil atualizado com sucesso!', 'success');
+                    await loadProfile();
+                    toggleEditForm();
+                    document.getElementById('editPassword').value = '';
+                } else {
+                    const errorMsg = (data.details && data.details[0] && data.details[0].message) || data.error || 'Erro ao atualizar perfil';
+                    showAlert(errorMsg || 'Erro ao atualizar perfil', 'error');
+                }
+            } catch (error) {
+                showAlert('Erro de conexão com o servidor', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Salvar Alterações';
+            }
+        }
+
+        loadProfile();
+    </script>
+</body>
+
+</html>

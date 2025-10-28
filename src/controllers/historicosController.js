@@ -12,12 +12,12 @@ const createHistorico = async (req, res) => {
 
         if (!pet) {
             logger.warn('Pet não encontrado para histórico', { petId: pet_id, clienteId });
-            return res.status(404).json({ error: 'Pet not found' });
+            return res.status(404).json({ error: 'Pet não encontrado' });
         }
 
         if (pet.cliente_id !== clienteId) {
             logger.warn('Tentativa de criar histórico para pet de outro cliente', { petId: pet_id, clienteId, ownerId: pet.cliente_id });
-            return res.status(403).json({ error: 'Access denied' });
+            return res.status(403).json({ error: 'Acesso negado' });
         }
 
         if (agendamento_id) {
@@ -27,12 +27,12 @@ const createHistorico = async (req, res) => {
 
             if (!agendamento) {
                 logger.warn('Agendamento não encontrado', { agendamentoId: agendamento_id, clienteId });
-                return res.status(404).json({ error: 'Appointment not found' });
+                return res.status(404).json({ error: 'Agendamento não encontrado' });
             }
 
             if (agendamento.pet_id !== pet_id) {
                 logger.warn('Agendamento não pertence ao pet', { agendamentoId: agendamento_id, petId: pet_id, clienteId });
-                return res.status(400).json({ error: 'Appointment does not belong to this pet' });
+                return res.status(400).json({ error: 'Agendamento não pertence a este pet' });
             }
         }
 
@@ -72,7 +72,7 @@ const createHistorico = async (req, res) => {
         res.status(201).json(novoHistorico);
     } catch (error) {
         logger.error('Erro ao criar histórico clínico', { error: error.message, stack: error.stack, clienteId });
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Erro interno do servidor' });
     }
 };
 
@@ -87,12 +87,12 @@ const getHistoricosByPet = async (req, res) => {
 
         if (!pet) {
             logger.warn('Pet não encontrado', { petId: pet_id, clienteId });
-            return res.status(404).json({ error: 'Pet not found' });
+            return res.status(404).json({ error: 'Pet não encontrado' });
         }
 
         if (pet.cliente_id !== clienteId) {
             logger.warn('Tentativa de acesso não autorizado aos históricos do pet', { petId: pet_id, clienteId, ownerId: pet.cliente_id });
-            return res.status(403).json({ error: 'Access denied' });
+            return res.status(403).json({ error: 'Acesso negado' });
         }
 
         const historicos = await prisma.historicos_clinicos.findMany({
@@ -119,7 +119,7 @@ const getHistoricosByPet = async (req, res) => {
         res.json(historicos);
     } catch (error) {
         logger.error('Erro ao listar históricos', { error: error.message, stack: error.stack, petId: pet_id, clienteId });
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Erro interno do servidor' });
     }
 };
 
@@ -162,19 +162,19 @@ const getHistoricoById = async (req, res) => {
 
         if (!historico) {
             logger.warn('Histórico não encontrado', { historicoId: id, clienteId });
-            return res.status(404).json({ error: 'Medical record not found' });
+            return res.status(404).json({ error: 'Histórico médico não encontrado' });
         }
 
         if (historico.pets.cliente_id !== clienteId) {
             logger.warn('Tentativa de acesso não autorizado ao histórico', { historicoId: id, clienteId, ownerId: historico.pets.cliente_id });
-            return res.status(403).json({ error: 'Access denied' });
+            return res.status(403).json({ error: 'Acesso negado' });
         }
 
         logger.info('Detalhes do histórico acessados', { historicoId: id, clienteId });
         res.json(historico);
     } catch (error) {
         logger.error('Erro ao buscar histórico', { error: error.message, stack: error.stack, historicoId: id, clienteId });
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Erro interno do servidor' });
     }
 };
 
@@ -197,12 +197,12 @@ const updateHistorico = async (req, res) => {
 
         if (!historico) {
             logger.warn('Histórico não encontrado para atualização', { historicoId: id, clienteId });
-            return res.status(404).json({ error: 'Medical record not found' });
+            return res.status(404).json({ error: 'Histórico médico não encontrado' });
         }
 
         if (historico.pets.cliente_id !== clienteId) {
             logger.warn('Tentativa de atualização não autorizada de histórico', { historicoId: id, clienteId, ownerId: historico.pets.cliente_id });
-            return res.status(403).json({ error: 'Access denied' });
+            return res.status(403).json({ error: 'Acesso negado' });
         }
 
         const updateData = {};
@@ -241,7 +241,7 @@ const updateHistorico = async (req, res) => {
         res.json(historicoAtualizado);
     } catch (error) {
         logger.error('Erro ao atualizar histórico', { error: error.message, stack: error.stack, historicoId: id, clienteId });
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Erro interno do servidor' });
     }
 };
 
@@ -263,12 +263,12 @@ const deleteHistorico = async (req, res) => {
 
         if (!historico) {
             logger.warn('Histórico não encontrado para exclusão', { historicoId: id, clienteId });
-            return res.status(404).json({ error: 'Medical record not found' });
+            return res.status(404).json({ error: 'Histórico médico não encontrado' });
         }
 
         if (historico.pets.cliente_id !== clienteId) {
             logger.warn('Tentativa de exclusão não autorizada de histórico', { historicoId: id, clienteId, ownerId: historico.pets.cliente_id });
-            return res.status(403).json({ error: 'Access denied' });
+            return res.status(403).json({ error: 'Acesso negado' });
         }
 
         await prisma.historicos_clinicos.delete({
@@ -276,10 +276,10 @@ const deleteHistorico = async (req, res) => {
         });
 
         logger.info('Histórico excluído', { historicoId: id, clienteId });
-        res.json({ message: 'Medical record deleted successfully' });
+        res.json({ message: 'Histórico médico excluído com sucesso' });
     } catch (error) {
         logger.error('Erro ao excluir histórico', { error: error.message, stack: error.stack, historicoId: id, clienteId });
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Erro interno do servidor' });
     }
 };
 
@@ -328,12 +328,12 @@ const getHistoricoCompleto = async (req, res) => {
 
         if (!pet) {
             logger.warn('Pet não encontrado', { petId: pet_id, clienteId });
-            return res.status(404).json({ error: 'Pet not found' });
+            return res.status(404).json({ error: 'Pet não encontrado' });
         }
 
         if (pet.cliente_id !== clienteId) {
             logger.warn('Tentativa de acesso não autorizado ao histórico completo', { petId: pet_id, clienteId, ownerId: pet.cliente_id });
-            return res.status(403).json({ error: 'Access denied' });
+            return res.status(403).json({ error: 'Acesso negado' });
         }
 
         logger.info('Histórico completo do pet acessado', { petId: pet_id, clienteId });
@@ -352,7 +352,7 @@ const getHistoricoCompleto = async (req, res) => {
         });
     } catch (error) {
         logger.error('Erro ao buscar histórico completo', { error: error.message, stack: error.stack, petId: pet_id, clienteId });
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Erro interno do servidor' });
     }
 };
 

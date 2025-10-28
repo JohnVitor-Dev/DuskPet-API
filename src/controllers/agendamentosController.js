@@ -12,12 +12,12 @@ const createAgendamento = async (req, res) => {
 
         if (!pet) {
             logger.warn('Pet não encontrado para agendamento', { petId: pet_id, clienteId });
-            return res.status(404).json({ error: 'Pet not found' });
+            return res.status(404).json({ error: 'Pet não encontrado' });
         }
 
         if (pet.cliente_id !== clienteId) {
             logger.warn('Tentativa de agendar para pet de outro cliente', { petId: pet_id, clienteId, ownerId: pet.cliente_id });
-            return res.status(403).json({ error: 'Access denied' });
+            return res.status(403).json({ error: 'Acesso negado' });
         }
 
         const veterinario = await prisma.veterinarios.findUnique({
@@ -26,7 +26,7 @@ const createAgendamento = async (req, res) => {
 
         if (!veterinario) {
             logger.warn('Veterinário não encontrado', { veterinarioId: veterinario_id, clienteId });
-            return res.status(404).json({ error: 'Veterinarian not found' });
+            return res.status(404).json({ error: 'Veterinário não encontrado' });
         }
 
         const dataHora = new Date(data_hora);
@@ -34,7 +34,7 @@ const createAgendamento = async (req, res) => {
 
         if (dataHora <= now) {
             logger.warn('Tentativa de agendar para data passada', { data_hora, clienteId });
-            return res.status(400).json({ error: 'Cannot schedule for past dates' });
+            return res.status(400).json({ error: 'Não é possível agendar para datas passadas' });
         }
 
         const conflito = await prisma.agendamentos.findFirst({
@@ -46,7 +46,7 @@ const createAgendamento = async (req, res) => {
 
         if (conflito) {
             logger.warn('Conflito de horário no agendamento', { veterinarioId: veterinario_id, data_hora, clienteId });
-            return res.status(409).json({ error: 'Time slot already booked' });
+            return res.status(409).json({ error: 'Horário já reservado' });
         }
 
         const novoAgendamento = await prisma.agendamentos.create({
@@ -80,7 +80,7 @@ const createAgendamento = async (req, res) => {
         res.status(201).json(novoAgendamento);
     } catch (error) {
         logger.error('Erro ao criar agendamento', { error: error.message, stack: error.stack, clienteId });
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Erro interno do servidor' });
     }
 };
 
@@ -124,7 +124,7 @@ const getAgendamentos = async (req, res) => {
         res.json(agendamentos);
     } catch (error) {
         logger.error('Erro ao listar agendamentos', { error: error.message, stack: error.stack, clienteId });
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Erro interno do servidor' });
     }
 };
 
@@ -159,19 +159,19 @@ const getAgendamentoById = async (req, res) => {
 
         if (!agendamento) {
             logger.warn('Agendamento não encontrado', { agendamentoId: id, clienteId });
-            return res.status(404).json({ error: 'Appointment not found' });
+            return res.status(404).json({ error: 'Agendamento não encontrado' });
         }
 
         if (agendamento.cliente_id !== clienteId) {
             logger.warn('Tentativa de acesso não autorizado a agendamento', { agendamentoId: id, clienteId, ownerId: agendamento.cliente_id });
-            return res.status(403).json({ error: 'Access denied' });
+            return res.status(403).json({ error: 'Acesso negado' });
         }
 
         logger.info('Detalhes do agendamento acessados', { agendamentoId: id, clienteId });
         res.json(agendamento);
     } catch (error) {
         logger.error('Erro ao buscar agendamento', { error: error.message, stack: error.stack, agendamentoId: id, clienteId });
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Erro interno do servidor' });
     }
 };
 
@@ -187,17 +187,17 @@ const updateAgendamento = async (req, res) => {
 
         if (!agendamento) {
             logger.warn('Agendamento não encontrado para atualização', { agendamentoId: id, clienteId });
-            return res.status(404).json({ error: 'Appointment not found' });
+            return res.status(404).json({ error: 'Agendamento não encontrado' });
         }
 
         if (agendamento.cliente_id !== clienteId) {
             logger.warn('Tentativa de atualização não autorizada de agendamento', { agendamentoId: id, clienteId, ownerId: agendamento.cliente_id });
-            return res.status(403).json({ error: 'Access denied' });
+            return res.status(403).json({ error: 'Acesso negado' });
         }
 
         if (agendamento.status === 'Concluído' || agendamento.status === 'Conclu_do') {
             logger.warn('Tentativa de atualizar agendamento concluído', { agendamentoId: id, clienteId });
-            return res.status(400).json({ error: 'Cannot update completed appointment' });
+            return res.status(400).json({ error: 'Não é possível atualizar agendamento concluído' });
         }
 
         const updateData = {};
@@ -208,7 +208,7 @@ const updateAgendamento = async (req, res) => {
 
             if (novaDataHora <= now) {
                 logger.warn('Tentativa de reagendar para data passada', { data_hora, clienteId });
-                return res.status(400).json({ error: 'Cannot schedule for past dates' });
+                return res.status(400).json({ error: 'Não é possível agendar para datas passadas' });
             }
 
             const conflito = await prisma.agendamentos.findFirst({
@@ -221,7 +221,7 @@ const updateAgendamento = async (req, res) => {
 
             if (conflito) {
                 logger.warn('Conflito de horário ao reagendar', { veterinarioId: agendamento.veterinario_id, data_hora, clienteId });
-                return res.status(409).json({ error: 'Time slot already booked' });
+                return res.status(409).json({ error: 'Horário já reservado' });
             }
 
             updateData.data_hora = novaDataHora;
@@ -255,7 +255,7 @@ const updateAgendamento = async (req, res) => {
         res.json(agendamentoAtualizado);
     } catch (error) {
         logger.error('Erro ao atualizar agendamento', { error: error.message, stack: error.stack, agendamentoId: id, clienteId });
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Erro interno do servidor' });
     }
 };
 
@@ -270,22 +270,22 @@ const cancelAgendamento = async (req, res) => {
 
         if (!agendamento) {
             logger.warn('Agendamento não encontrado para cancelamento', { agendamentoId: id, clienteId });
-            return res.status(404).json({ error: 'Appointment not found' });
+            return res.status(404).json({ error: 'Agendamento não encontrado' });
         }
 
         if (agendamento.cliente_id !== clienteId) {
             logger.warn('Tentativa de cancelamento não autorizado de agendamento', { agendamentoId: id, clienteId, ownerId: agendamento.cliente_id });
-            return res.status(403).json({ error: 'Access denied' });
+            return res.status(403).json({ error: 'Acesso negado' });
         }
 
         if (agendamento.status === 'Cancelado') {
             logger.warn('Tentativa de cancelar agendamento já cancelado', { agendamentoId: id, clienteId });
-            return res.status(400).json({ error: 'Appointment already cancelled' });
+            return res.status(400).json({ error: 'Agendamento já cancelado' });
         }
 
         if (agendamento.status === 'Concluído' || agendamento.status === 'Conclu_do') {
             logger.warn('Tentativa de cancelar agendamento concluído', { agendamentoId: id, clienteId });
-            return res.status(400).json({ error: 'Cannot cancel completed appointment' });
+            return res.status(400).json({ error: 'Não é possível cancelar agendamento concluído' });
         }
 
         const agendamentoCancelado = await prisma.agendamentos.update({
@@ -294,10 +294,10 @@ const cancelAgendamento = async (req, res) => {
         });
 
         logger.info('Agendamento cancelado', { agendamentoId: id, clienteId });
-        res.json({ message: 'Appointment cancelled successfully', agendamento: agendamentoCancelado });
+        res.json({ message: 'Agendamento cancelado com sucesso', agendamento: agendamentoCancelado });
     } catch (error) {
         logger.error('Erro ao cancelar agendamento', { error: error.message, stack: error.stack, agendamentoId: id, clienteId });
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Erro interno do servidor' });
     }
 };
 
@@ -306,7 +306,7 @@ const getHorariosDisponiveis = async (req, res) => {
 
     try {
         if (!veterinario_id || !data) {
-            return res.status(400).json({ error: 'Veterinarian ID and date are required' });
+            return res.status(400).json({ error: 'ID do veterinário e data são obrigatórios' });
         }
 
         const veterinario = await prisma.veterinarios.findUnique({
@@ -314,7 +314,7 @@ const getHorariosDisponiveis = async (req, res) => {
         });
 
         if (!veterinario) {
-            return res.status(404).json({ error: 'Veterinarian not found' });
+            return res.status(404).json({ error: 'Veterinário não encontrado' });
         }
 
         const dataConsulta = new Date(data);
@@ -358,7 +358,7 @@ const getHorariosDisponiveis = async (req, res) => {
         });
     } catch (error) {
         logger.error('Erro ao buscar horários disponíveis', { error: error.message, stack: error.stack });
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Erro interno do servidor' });
     }
 };
 

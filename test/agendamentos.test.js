@@ -29,6 +29,8 @@ let authToken = '';
 let petId = null;
 let veterinarioId = null;
 let agendamentoId = null;
+let dataAgendamento = null; // YYYY-MM-DD
+let horarioAgendamento = null; // HH:mm
 
 async function setupTestData() {
     log('\n========== PREPARANDO DADOS DE TESTE ==========', 'blue');
@@ -111,6 +113,11 @@ async function testGetHorariosDisponiveis() {
             log('✅ SUCESSO: Horários disponíveis obtidos', 'green');
             log(`   Data: ${response.data.data}`, 'yellow');
             log(`   Horários: ${response.data.horarios_disponiveis.length} disponíveis`, 'yellow');
+            if (response.data.horarios_disponiveis.length > 0) {
+                dataAgendamento = response.data.data;
+                horarioAgendamento = response.data.horarios_disponiveis[0];
+                log(`   Selecionado: ${dataAgendamento} ${horarioAgendamento}`, 'yellow');
+            }
         } else {
             log('❌ FALHA: Resposta inválida', 'red');
         }
@@ -181,14 +188,22 @@ async function testCreateAgendamentoSuccess() {
 
     try {
         log('\nCriando agendamento...', 'yellow');
-        const amanha = new Date();
-        amanha.setDate(amanha.getDate() + 1);
-        amanha.setHours(10, 0, 0, 0);
-
+        let dataHora = null;
+        if (dataAgendamento && horarioAgendamento) {
+            const [h, m] = horarioAgendamento.split(':').map(Number);
+            const dt = new Date(dataAgendamento);
+            dt.setHours(h, m, 0, 0);
+            dataHora = dt.toISOString();
+        } else {
+            const amanha = new Date();
+            amanha.setDate(amanha.getDate() + 1);
+            amanha.setHours(10, 0, 0, 0);
+            dataHora = amanha.toISOString();
+        }
         const response = await axios.post(`${BASE_URL}/protected/agendamentos`, {
             pet_id: petId,
             veterinario_id: veterinarioId,
-            data_hora: amanha.toISOString(),
+            data_hora: dataHora,
             tipo_consulta: 'Consulta de rotina'
         }, {
             headers: { Authorization: `Bearer ${authToken}` }
@@ -213,14 +228,23 @@ async function testConflitodeHorario() {
 
     try {
         log('\nTentando criar agendamento no mesmo horário...', 'yellow');
-        const amanha = new Date();
-        amanha.setDate(amanha.getDate() + 1);
-        amanha.setHours(10, 0, 0, 0);
+        let dataHora = null;
+        if (dataAgendamento && horarioAgendamento) {
+            const [h, m] = horarioAgendamento.split(':').map(Number);
+            const dt = new Date(dataAgendamento);
+            dt.setHours(h, m, 0, 0);
+            dataHora = dt.toISOString();
+        } else {
+            const amanha = new Date();
+            amanha.setDate(amanha.getDate() + 1);
+            amanha.setHours(10, 0, 0, 0);
+            dataHora = amanha.toISOString();
+        }
 
         await axios.post(`${BASE_URL}/protected/agendamentos`, {
             pet_id: petId,
             veterinario_id: veterinarioId,
-            data_hora: amanha.toISOString(),
+            data_hora: dataHora,
             tipo_consulta: 'Outra consulta'
         }, {
             headers: { Authorization: `Bearer ${authToken}` }
@@ -260,6 +284,10 @@ async function testGetAgendamentoById() {
 
     try {
         log('\nBuscando detalhes do agendamento...', 'yellow');
+        if (!agendamentoId) {
+            log('⚠️  Pulando: sem agendamento criado', 'yellow');
+            return;
+        }
         const response = await axios.get(`${BASE_URL}/protected/agendamentos/${agendamentoId}`, {
             headers: { Authorization: `Bearer ${authToken}` }
         });
@@ -281,6 +309,10 @@ async function testUpdateAgendamento() {
 
     try {
         log('\nAtualizando agendamento...', 'yellow');
+        if (!agendamentoId) {
+            log('⚠️  Pulando: sem agendamento criado', 'yellow');
+            return;
+        }
         const response = await axios.put(`${BASE_URL}/protected/agendamentos/${agendamentoId}`, {
             tipo_consulta: 'Consulta de emergência'
         }, {
@@ -303,6 +335,10 @@ async function testCancelAgendamento() {
 
     try {
         log('\nCancelando agendamento...', 'yellow');
+        if (!agendamentoId) {
+            log('⚠️  Pulando: sem agendamento criado', 'yellow');
+            return;
+        }
         const response = await axios.patch(`${BASE_URL}/protected/agendamentos/${agendamentoId}/cancel`, {}, {
             headers: { Authorization: `Bearer ${authToken}` }
         });

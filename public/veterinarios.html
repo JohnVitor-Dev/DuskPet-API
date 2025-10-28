@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DuskPet API - Veterinários</title>
+</head>
+
+<body>
+    <div class="container">
+        <a href="menu.html" class="back-btn">← Voltar ao Menu</a>
+
+        <div class="header">
+            <h1>👨‍⚕️ Veterinários</h1>
+            <p>Conheça nossa equipe de veterinários</p>
+        </div>
+
+        <div class="actions">
+            <select id="especialidadeFilter" onchange="filterVeterinarios()" title="Filtrar por especialidade">
+                <option value="">Todas as especialidades</option>
+            </select>
+        </div>
+
+        <div id="loadingDiv" class="loading">Carregando veterinários...</div>
+        <div id="veterinariosGrid" class="vet-grid"></div>
+    </div>
+
+    <!-- Modal Detalhes do Veterinário -->
+    <div id="vetDetailsModal" class="modal"
+        style="display:none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); z-index:1000; justify-content:center; align-items:center; overflow-y:auto;">
+        <div class="modal-content"
+            style="background:white; padding:30px; border-radius:16px; max-width:700px; width:90%; margin:20px;">
+            <div class="modal-header"
+                style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+                <h2 id="vetDetailsTitle" style="color:#333;">Detalhes do Veterinário</h2>
+                <button class="close-btn" onclick="closeDetails()"
+                    style="background:none; border:none; font-size:2em; cursor:pointer; color:#999;">&times;</button>
+            </div>
+            <div id="vetDetailsBody">
+                <div id="vetDetailsLoading" class="loading" style="color:#333; padding:10px;">Carregando detalhes...
+                </div>
+                <div id="vetDetailsContent" style="display:none;">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:16px;">
+                        <div style="background:#f9fafb; border:1px solid #eee; border-radius:10px; padding:16px;">
+                            <h3 style="margin-bottom:8px; color:#38b2ac;">Informações</h3>
+                            <div style="color:#444; line-height:1.8;">
+                                <div><strong>Nome:</strong> <span id="detNome"></span></div>
+                                <div><strong>CRMV:</strong> <span id="detCrmv"></span></div>
+                                <div><strong>Especialidades:</strong> <span id="detEsp"></span></div>
+                                <div><strong>Membro desde:</strong> <span id="detDesde"></span></div>
+                            </div>
+                        </div>
+                        <div style="background:#f9fafb; border:1px solid #eee; border-radius:10px; padding:16px;">
+                            <h3 style="margin-bottom:8px; color:#38b2ac;">Horários de trabalho</h3>
+                            <pre id="detHorarios"
+                                style="white-space:pre-wrap; background:#fff; border:1px solid #eee; border-radius:8px; padding:10px; color:#333; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000';
+        let veterinarios = [];
+        let allVeterinarios = [];
+
+        async function loadVeterinarios() {
+            try {
+                const response = await fetch(`${API_URL}/veterinarios`);
+                if (response.ok) {
+                    allVeterinarios = await response.json();
+                    veterinarios = allVeterinarios;
+                    displayVeterinarios(veterinarios);
+                    populateEspecialidades();
+                }
+            } catch (error) {
+                console.error('Erro ao carregar veterinários:', error);
+            } finally {
+                document.getElementById('loadingDiv').style.display = 'none';
+            }
+        }
+
+        function flattenEspecialidades(list) {
+            const result = [];
+            list.forEach(v => {
+                if (Array.isArray(v.especialidades)) {
+                    v.especialidades.forEach(e => { if (e) result.push(e); });
+                } else if (typeof v.especialidades === 'string' && v.especialidades) {
+                    // Caso venha string única
+                    result.push(v.especialidades);
+                }
+            });
+            return result;
+        }
+
+        function populateEspecialidades() {
+            const especialidades = [...new Set(flattenEspecialidades(allVeterinarios))].sort((a, b) => a.localeCompare(b));
+            const select = document.getElementById('especialidadeFilter');
+            select.innerHTML = '<option value="">Todas as especialidades</option>' +
+                especialidades.map(e => `<option value="${e}">${e}</option>`).join('');
+        }
+
+        async function filterVeterinarios() {
+            const especialidade = document.getElementById('especialidadeFilter').value;
+            document.getElementById('loadingDiv').style.display = 'block';
+            try {
+                const url = especialidade ? `${API_URL}/veterinarios?especialidade=${encodeURIComponent(especialidade)}` : `${API_URL}/veterinarios`;
+                const response = await fetch(url);
+                if (response.ok) {
+                    veterinarios = await response.json();
+                    // Atualiza também allVeterinarios quando removemos filtro
+                    if (!especialidade) allVeterinarios = veterinarios;
+                    displayVeterinarios(veterinarios);
+                }
+            } catch (e) {
+                console.error('Erro ao filtrar veterinários:', e);
+            } finally {
+                document.getElementById('loadingDiv').style.display = 'none';
+            }
+        }
+
+        function displayVeterinarios(veterinariosToDisplay) {
+            const grid = document.getElementById('veterinariosGrid');
+            grid.innerHTML = veterinariosToDisplay.map(v => {
+                const esp = Array.isArray(v.especialidades) ? (v.especialidades.join(', ') || '') : (v.especialidades || '');
+                const horarios = v.horarios_trabalho ? formatHorarios(v.horarios_trabalho) : '';
+                return `
+                <div class="vet-card">
+                    <div class="vet-avatar">👨‍⚕️</div>
+                    <h3>${v.nome}</h3>
+                    <p class="crmv">CRMV: ${v.crmv}</p>
+                    ${esp ? `<p class="especialidade">🔹 ${esp}</p>` : ''}
+                    ${horarios ? `<p class="horarios">🕐 ${horarios}</p>` : ''}
+                    <div style="margin-top:10px;">
+                        <button class="btn" style="padding:8px 16px; font-size:14px;" onclick="viewVeterinario(${v.id})">Detalhes</button>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        function formatHorarios(horarios) {
+            try {
+                if (typeof horarios === 'string') return horarios;
+                if (!horarios) return '';
+                // Tenta formatar JSON simples chave->valor
+                if (typeof horarios === 'object') {
+                    const parts = [];
+                    for (const k in horarios) {
+                        if (Object.prototype.hasOwnProperty.call(horarios, k)) {
+                            parts.push(`${k}: ${horarios[k]}`);
+                        }
+                    }
+                    return parts.join(' | ');
+                }
+            } catch (_) { }
+            return String(horarios);
+        }
+
+        async function viewVeterinario(id) {
+            const modal = document.getElementById('vetDetailsModal');
+            const loading = document.getElementById('vetDetailsLoading');
+            const content = document.getElementById('vetDetailsContent');
+            modal.style.display = 'flex';
+            loading.style.display = 'block';
+            content.style.display = 'none';
+
+            try {
+                const resp = await fetch(`${API_URL}/veterinarios/${id}`);
+                const data = await resp.json();
+                if (!resp.ok) {
+                    console.error('Erro ao carregar detalhes do veterinário:', data);
+                    return;
+                }
+                document.getElementById('vetDetailsTitle').textContent = `Veterinário #${data.id}`;
+                document.getElementById('detNome').textContent = data.nome || '-';
+                document.getElementById('detCrmv').textContent = data.crmv || '-';
+                const esp = Array.isArray(data.especialidades) ? (data.especialidades.join(', ') || '-') : (data.especialidades || '-');
+                document.getElementById('detEsp').textContent = esp;
+                document.getElementById('detDesde').textContent = data.created_at ? new Date(data.created_at).toLocaleDateString('pt-BR') : '-';
+                document.getElementById('detHorarios').textContent = data.horarios_trabalho ? (typeof data.horarios_trabalho === 'string' ? data.horarios_trabalho : JSON.stringify(data.horarios_trabalho, null, 2)) : 'Não informado';
+
+                loading.style.display = 'none';
+                content.style.display = 'block';
+            } catch (e) {
+                loading.style.display = 'none';
+                console.error('Erro ao buscar detalhes:', e);
+            }
+        }
+
+        function closeDetails() {
+            document.getElementById('vetDetailsModal').style.display = 'none';
+        }
+
+        loadVeterinarios();
+    </script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 8px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .actions {
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .actions select {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            min-width: 250px;
+        }
+
+        .vet-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .vet-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+        }
+
+        .vet-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .vet-avatar {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3em;
+            margin: 0 auto 20px;
+        }
+
+        .vet-card h3 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .vet-card p {
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .crmv {
+            font-weight: 600;
+            color: #43e97b;
+        }
+
+        .especialidade {
+            background: #f0f9ff;
+            padding: 8px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .horarios {
+            font-size: 0.9em;
+            color: #999;
+            margin-top: 10px;
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            padding: 40px;
+            font-size: 1.2em;
+        }
+    </style>
+</body>
+
+</html>

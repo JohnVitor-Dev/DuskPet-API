@@ -10,7 +10,7 @@ const login = async (req, res) => {
 
     if (!email || !password) {
         logger.warn('Tentativa de login sem credenciais completas', { email });
-        return res.status(400).json({ error: 'Email and password are required' });
+        return res.status(400).json({ error: 'Email e senha são obrigatórios' });
     }
 
     if (!JWT_SECRET) {
@@ -23,14 +23,14 @@ const login = async (req, res) => {
 
         if (!user) {
             logger.warn('Tentativa de login com email inexistente', { email, ip: req.ip });
-            return res.status(401).json({ error: 'Invalid credentials' });
+            return res.status(401).json({ error: 'Credenciais inválidas' });
         }
 
         const validPassword = await bcrypt.compare(password, user.senha_hash);
 
         if (!validPassword) {
             logger.warn('Tentativa de login com senha inválida', { email, ip: req.ip });
-            return res.status(401).json({ error: 'Invalid credentials' });
+            return res.status(401).json({ error: 'Credenciais inválidas' });
         }
 
         const token = jwt.sign(
@@ -40,10 +40,17 @@ const login = async (req, res) => {
         );
 
         logger.info('Login bem-sucedido', { userId: user.id, email: user.email });
-        res.json({ token });
+        res.json({
+            token,
+            user: {
+                name: user.nome,
+                email: user.email,
+                id: user.id
+            }
+        });
     } catch (error) {
         logger.error('Erro no login', { error: error.message, stack: error.stack, email });
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Erro interno do servidor' });
     }
 };
 
@@ -52,7 +59,7 @@ const adminLogin = async (req, res) => {
 
     if (!email || !password) {
         logger.warn('Tentativa de login admin sem credenciais completas', { email });
-        return res.status(400).json({ error: 'Email and password are required' });
+        return res.status(400).json({ error: 'Email e senha são obrigatórios' });
     }
 
     if (!JWT_SECRET) {
@@ -65,14 +72,14 @@ const adminLogin = async (req, res) => {
 
         if (!admin) {
             logger.warn('Tentativa de login admin com email inexistente', { email, ip: req.ip });
-            return res.status(401).json({ error: 'Invalid credentials' });
+            return res.status(401).json({ error: 'Credenciais inválidas' });
         }
 
         const valid = await bcrypt.compare(password, admin.senha_hash);
 
         if (!valid) {
             logger.warn('Tentativa de login admin com senha inválida', { email, ip: req.ip });
-            return res.status(401).json({ error: 'Invalid credentials' });
+            return res.status(401).json({ error: 'Credenciais inválidas' });
         }
 
         const token = jwt.sign(
@@ -82,11 +89,18 @@ const adminLogin = async (req, res) => {
         );
 
         logger.info('Login admin bem-sucedido', { userId: admin.id, email: admin.email });
-        res.json({ token });
+        res.json({
+            token,
+            user: {
+                name: admin.nome || 'Admin',
+                email: admin.email,
+                id: admin.id
+            }
+        });
 
     } catch (error) {
         logger.error('Erro no login admin', { error: error.message, stack: error.stack, email });
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Erro interno do servidor' });
     }
 };
 

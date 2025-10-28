@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DuskPet API - Agendamentos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 8px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255, 255, 255, 0.3);
+        }
+
+        .filters {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filters select {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .agendamentos-grid {
+            display: grid;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .agendamento-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .agendamento-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            color: white;
+        }
+
+        .agendamento-info h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .agendamento-info p {
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .status-badge {
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .status-agendado {
+            background: #007bff;
+            color: white;
+        }
+
+        .status-confirmado {
+            background: #28a745;
+            color: white;
+        }
+
+        .status-cancelado {
+            background: #dc3545;
+            color: white;
+        }
+
+        .status-concluido {
+            background: #6c757d;
+            color: white;
+        }
+
+        .agendamento-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn-small {
+            padding: 8px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-edit {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-cancel {
+            background: #dc3545;
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            margin: 20px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            color: #667eea;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 2em;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .empty-state {
+            background: white;
+            padding: 60px 40px;
+            border-radius: 15px;
+            text-align: center;
+            color: #666;
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.2em;
+            padding: 40px;
+        }
+
+        .horarios-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .horario-btn {
+            padding: 10px;
+            background: #e9ecef;
+            border: 2px solid #dee2e6;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .horario-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .horario-btn.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .horario-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="menu.html" class="back-btn">← Voltar ao Menu</a>
+
+        <div class="header">
+            <h1>📅 Agendamentos</h1>
+            <p>Gerencie suas consultas veterinárias</p>
+        </div>
+
+        <div class="alert" id="alert"></div>
+
+        <div class="actions">
+            <button class="btn" onclick="openCreateModal()">➕ Novo Agendamento</button>
+            <div class="filters">
+                <select id="statusFilter" onchange="filterAgendamentos()">
+                    <option value="">Todos os status</option>
+                    <option value="agendado">Agendado</option>
+                    <option value="concluido">Concluído</option>
+                    <option value="cancelado">Cancelado</option>
+                </select>
+                <select id="petFilter" onchange="filterAgendamentos()">
+                    <option value="">Todos os pets</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="loadingDiv" class="loading">Carregando agendamentos...</div>
+
+        <div id="agendamentosGrid" class="agendamentos-grid"></div>
+
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <div style="font-size: 5em;">📅</div>
+            <h2>Nenhum agendamento encontrado</h2>
+            <p>Clique em "Novo Agendamento" para agendar uma consulta</p>
+        </div>
+    </div>
+
+    <!-- Modal Criar/Editar -->
+    <div id="agendamentoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Novo Agendamento</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="agendamentoForm" onsubmit="handleSaveAgendamento(event)">
+                <input type="hidden" id="agendamentoId">
+                <div class="form-group">
+                    <label>Pet:</label>
+                    <select id="petId" required onchange="loadVeterinarios()">
+                        <option value="">Selecione um pet...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Veterinário:</label>
+                    <select id="veterinarioId" required onchange="loadHorarios()">
+                        <option value="">Selecione um veterinário...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Data:</label>
+                    <input type="date" id="dataConsulta" required onchange="loadHorarios()">
+                </div>
+                <div class="form-group" id="horariosContainer" style="display: none;">
+                    <label>Horários Disponíveis:</label>
+                    <div id="horariosGrid" class="horarios-grid"></div>
+                </div>
+                <div class="form-group">
+                    <label>Motivo da Consulta:</label>
+                    <textarea id="motivoConsulta" required
+                        placeholder="Ex.: Consulta de rotina, vacina, retorno..."></textarea>
+                </div>
+                <button type="submit" class="btn" id="saveBtn">Agendar Consulta</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Detalhes do Agendamento -->
+    <div id="agendamentoDetailsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="detailsTitle">Detalhes do Agendamento</h2>
+                <button class="close-btn" onclick="closeDetails()">&times;</button>
+            </div>
+            <div id="detailsBody">
+                <div id="detailsLoading" class="loading" style="color:#333; padding:10px;">Carregando detalhes...</div>
+                <div id="detailsContent" style="display:none;">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:16px;">
+                        <div style="background:#f9fafb; border:1px solid #eee; border-radius:10px; padding:16px;">
+                            <h3 style="margin-bottom:8px; color:#667eea;">Informações</h3>
+                            <div style="color:#444; line-height:1.6;">
+                                <div><strong>Status:</strong> <span id="detailsStatus"></span></div>
+                                <div><strong>Data/Hora:</strong> <span id="detailsQuando"></span></div>
+                                <div><strong>Motivo:</strong> <span id="detailsMotivo"></span></div>
+                            </div>
+                        </div>
+                        <div style="background:#f9fafb; border:1px solid #eee; border-radius:10px; padding:16px;">
+                            <h3 style="margin-bottom:8px; color:#667eea;">Veterinário</h3>
+                            <div style="color:#444; line-height:1.6;">
+                                <div><strong>Nome:</strong> <span id="detailsVetNome"></span></div>
+                                <div><strong>CRMV:</strong> <span id="detailsVetCrmv"></span></div>
+                                <div><strong>Especialidades:</strong> <span id="detailsVetEsp"></span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        style="background:#f9fafb; border:1px solid #eee; border-radius:10px; padding:16px; margin-bottom:16px;">
+                        <h3 style="margin-bottom:8px; color:#667eea;">Pet</h3>
+                        <div style="color:#444; line-height:1.6;">
+                            <div><strong>Nome:</strong> <span id="detailsPetNome"></span></div>
+                            <div><strong>Espécie:</strong> <span id="detailsPetEspecie"></span></div>
+                            <div><strong>Raça:</strong> <span id="detailsPetRaca"></span></div>
+                            <div><strong>Sexo:</strong> <span id="detailsPetSexo"></span></div>
+                            <div id="detailsPetIdadeRow" style="display:none;"><strong>Nascimento:</strong> <span
+                                    id="detailsPetNasc"></span></div>
+                        </div>
+                    </div>
+                    <div style="background:#f9fafb; border:1px solid #eee; border-radius:10px; padding:16px;">
+                        <h3 style="margin-bottom:8px; color:#667eea;">Históricos clínicos</h3>
+                        <ul id="detailsHistoricos" style="list-style:none; padding-left:0; margin:0; color:#444;"></ul>
+                        <div id="detailsHistoricosEmpty" style="color:#777;">Sem históricos neste agendamento.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000';
+        let agendamentos = [];
+        let allAgendamentos = [];
+        let pets = [];
+        let veterinarios = [];
+        let selectedHorario = null;
+
+        function statusSlug(status) {
+            if (status === 'Conclu_do' || status === 'Concluído') return 'concluido';
+            if (status === 'Agendado' || status === 'agendado') return 'agendado';
+            if (status === 'Cancelado' || status === 'cancelado') return 'cancelado';
+            return String(status || '').toLowerCase();
+        }
+
+        function statusLabel(status) {
+            if (status === 'Conclu_do') return 'Concluído';
+            return status;
+        }
+
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.textContent = message;
+            alert.className = `alert ${type} show`;
+            setTimeout(() => alert.classList.remove('show'), 5000);
+        }
+
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const userType = localStorage.getItem('userType');
+            if (!token) {
+                alert('Você precisa fazer login primeiro!');
+                window.location.href = 'auth.html';
+                return false;
+            }
+            if (userType !== 'cliente') {
+                alert('Acesso restrito aos clientes.');
+                if (userType === 'admin') window.location.href = 'admin.html';
+                else if (userType === 'atendente') window.location.href = 'atendente.html';
+                else window.location.href = 'auth.html';
+                return false;
+            }
+            return true;
+        }
+
+        async function loadPets() {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_URL}/protected/pets`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (response.status === 401) {
+                alert('Sessão expirada. Faça login novamente.');
+                localStorage.clear();
+                window.location.href = 'auth.html';
+                return;
+            }
+            if (response.ok) {
+                pets = await response.json();
+                const petSelect = document.getElementById('petId');
+                const petFilter = document.getElementById('petFilter');
+
+                petSelect.innerHTML = '<option value="">Selecione um pet...</option>' +
+                    pets.map(p => `<option value="${p.id}">${p.nome}</option>`).join('');
+
+                petFilter.innerHTML = '<option value="">Todos os pets</option>' +
+                    pets.map(p => `<option value="${p.id}">${p.nome}</option>`).join('');
+            }
+        }
+
+        async function loadVeterinarios() {
+            const response = await fetch(`${API_URL}/veterinarios`);
+            if (response.ok) {
+                veterinarios = await response.json();
+                const vetSelect = document.getElementById('veterinarioId');
+                vetSelect.innerHTML = '<option value="">Selecione um veterinário...</option>' +
+                    veterinarios.map(v => {
+                        const esp = Array.isArray(v.especialidades) ? (v.especialidades.join(', ') || '-') : (v.especialidades || '-');
+                        return `<option value="${v.id}">${v.nome} - ${esp}</option>`;
+                    }).join('');
+            }
+        }
+
+        async function loadHorarios() {
+            const vetId = document.getElementById('veterinarioId').value;
+            const data = document.getElementById('dataConsulta').value;
+
+            if (!vetId || !data) return;
+
+            const token = localStorage.getItem('token');
+            const response = await fetch(
+                `${API_URL}/protected/agendamentos/horarios-disponiveis?veterinario_id=${vetId}&data=${data}`,
+                { headers: { 'Authorization': `Bearer ${token}` } }
+            );
+
+            if (response.status === 401) {
+                alert('Sessão expirada. Faça login novamente.');
+                localStorage.clear();
+                window.location.href = 'auth.html';
+                return;
+            }
+            if (response.ok) {
+                const obj = await response.json();
+                const horarios = Array.isArray(obj) ? obj : (obj.horarios_disponiveis || []);
+                const horariosGrid = document.getElementById('horariosGrid');
+                const container = document.getElementById('horariosContainer');
+
+                if (horarios.length > 0) {
+                    container.style.display = 'block';
+                    horariosGrid.innerHTML = horarios.map(h =>
+                        `<button type="button" class="horario-btn" onclick="selectHorario(this,'${h}')">${h}</button>`
+                    ).join('');
+                } else {
+                    container.style.display = 'none';
+                    showAlert('Nenhum horário disponível para esta data', 'error');
+                }
+            }
+        }
+
+        function selectHorario(el, horario) {
+            document.querySelectorAll('.horario-btn').forEach(btn => btn.classList.remove('selected'));
+            el.classList.add('selected');
+            selectedHorario = horario;
+        }
+
+        async function loadAgendamentos() {
+            if (!checkAuth()) return;
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/protected/agendamentos`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.status === 401) {
+                    alert('Sessão expirada. Faça login novamente.');
+                    localStorage.clear();
+                    window.location.href = 'auth.html';
+                    return;
+                }
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    allAgendamentos = data;
+                    agendamentos = data;
+                    displayAgendamentos(agendamentos);
+                }
+            } catch (error) {
+                showAlert('Erro de conexão com o servidor', 'error');
+            } finally {
+                document.getElementById('loadingDiv').style.display = 'none';
+            }
+        }
+
+        function displayAgendamentos(agendamentosToDisplay) {
+            const grid = document.getElementById('agendamentosGrid');
+            const emptyState = document.getElementById('emptyState');
+
+            if (agendamentosToDisplay.length === 0) {
+                grid.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            grid.innerHTML = agendamentosToDisplay.map(ag => `
+                <div class="agendamento-card">
+                    <div class="agendamento-icon">📋</div>
+                    <div class="agendamento-info">
+                        <h3>${ag.pets.nome}</h3>
+                        <p><strong>Veterinário:</strong> ${ag.veterinarios.nome}</p>
+                        <p><strong>Data/Hora:</strong> ${formatDateTime(ag.data_hora)}</p>
+                        <p><strong>Motivo:</strong> ${ag.tipo_consulta || '-'}</p>
+                        <span class="status-badge status-${statusSlug(ag.status)}">${statusLabel(ag.status)}</span>
+                    </div>
+                    <div class="agendamento-actions">
+                        <button class="btn-small" style="background:#10b981; color:white;" onclick="viewAgendamento(${ag.id})">Detalhes</button>
+                        ${statusSlug(ag.status) === 'agendado' ? `
+                            <button class="btn-small btn-edit" onclick="editAgendamento(${ag.id})">Editar</button>
+                            <button class="btn-small btn-cancel" onclick="cancelAgendamento(${ag.id})">Cancelar</button>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function formatDateTime(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function filterAgendamentos() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            const petFilter = document.getElementById('petFilter').value;
+
+            let filtered = allAgendamentos;
+
+            if (statusFilter) {
+                filtered = filtered.filter(a => statusSlug(a.status) === statusFilter);
+            }
+
+            if (petFilter) {
+                filtered = filtered.filter(a => a.pet_id === parseInt(petFilter));
+            }
+
+            displayAgendamentos(filtered);
+        }
+
+        function openCreateModal() {
+            document.getElementById('modalTitle').textContent = 'Novo Agendamento';
+            document.getElementById('agendamentoForm').reset();
+            document.getElementById('agendamentoId').value = '';
+            document.getElementById('horariosContainer').style.display = 'none';
+            document.getElementById('agendamentoModal').classList.add('active');
+            selectedHorario = null;
+        }
+
+        async function editAgendamento(id) {
+            const ag = allAgendamentos.find(a => a.id === id);
+            if (!ag) return;
+
+            document.getElementById('modalTitle').textContent = 'Editar Agendamento';
+            document.getElementById('agendamentoId').value = ag.id;
+            document.getElementById('petId').value = ag.pet_id;
+            document.getElementById('veterinarioId').value = ag.veterinario_id;
+
+            const dataHora = new Date(ag.data_hora);
+            document.getElementById('dataConsulta').value = dataHora.toISOString().split('T')[0];
+            document.getElementById('motivoConsulta').value = ag.motivo_consulta;
+
+            await loadHorarios();
+            const horario = dataHora.toTimeString().substring(0, 5);
+            selectedHorario = horario;
+
+            setTimeout(() => {
+                const buttons = document.querySelectorAll('.horario-btn');
+                buttons.forEach(btn => {
+                    if (btn.textContent === horario) {
+                        btn.classList.add('selected');
+                    }
+                });
+            }, 500);
+
+            document.getElementById('agendamentoModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('agendamentoModal').classList.remove('active');
+        }
+
+        async function handleSaveAgendamento(e) {
+            e.preventDefault();
+
+            if (!selectedHorario) {
+                showAlert('Selecione um horário', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('saveBtn');
+            btn.disabled = true;
+            btn.textContent = 'Salvando...';
+
+            try {
+                const token = localStorage.getItem('token');
+                const data = document.getElementById('dataConsulta').value;
+                const dataHora = new Date(`${data}T${selectedHorario}:00`);
+
+                const agendamentoData = {
+                    pet_id: parseInt(document.getElementById('petId').value),
+                    veterinario_id: parseInt(document.getElementById('veterinarioId').value),
+                    data_hora: dataHora.toISOString(),
+                    tipo_consulta: document.getElementById('motivoConsulta').value
+                };
+
+                const agendamentoId = document.getElementById('agendamentoId').value;
+                const url = agendamentoId
+                    ? `${API_URL}/protected/agendamentos/${agendamentoId}`
+                    : `${API_URL}/protected/agendamentos`;
+
+                const method = agendamentoId ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(agendamentoData)
+                });
+
+                if (response.status === 401) {
+                    alert('Sessão expirada. Faça login novamente.');
+                    localStorage.clear();
+                    window.location.href = 'auth.html';
+                    return;
+                }
+
+                let result = {};
+                try { result = await response.json(); } catch (_) { }
+
+                if (response.ok) {
+                    showAlert(`Agendamento ${agendamentoId ? 'atualizado' : 'criado'} com sucesso!`, 'success');
+                    closeModal();
+                    await loadAgendamentos();
+                } else {
+                    const errorMsg = (result.details && result.details[0] && result.details[0].message) || result.error;
+                    showAlert(errorMsg || 'Erro ao salvar agendamento', 'error');
+                }
+            } catch (error) {
+                showAlert('Erro de conexão com o servidor', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Agendar Consulta';
+            }
+        }
+
+        async function cancelAgendamento(id) {
+            if (!confirm('Tem certeza que deseja cancelar este agendamento?')) {
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/protected/agendamentos/${id}/cancel`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.status === 401) {
+                    alert('Sessão expirada. Faça login novamente.');
+                    localStorage.clear();
+                    window.location.href = 'auth.html';
+                    return;
+                }
+
+                if (response.ok) {
+                    showAlert('Agendamento cancelado com sucesso!', 'success');
+                    await loadAgendamentos();
+                } else {
+                    let data = {};
+                    try { data = await response.json(); } catch (_) { }
+                    const msg = (data && (data.error || (data.details && data.details[0]?.message))) || 'Erro ao cancelar agendamento';
+                    showAlert(msg, 'error');
+                }
+            } catch (error) {
+                showAlert('Erro de conexão com o servidor', 'error');
+            }
+        }
+
+        async function viewAgendamento(id) {
+            if (!checkAuth()) return;
+            const modal = document.getElementById('agendamentoDetailsModal');
+            const loading = document.getElementById('detailsLoading');
+            const content = document.getElementById('detailsContent');
+            modal.classList.add('active');
+            loading.style.display = 'block';
+            content.style.display = 'none';
+
+            try {
+                const token = localStorage.getItem('token');
+                const resp = await fetch(`${API_URL}/protected/agendamentos/${id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (resp.status === 401) {
+                    alert('Sessão expirada. Faça login novamente.');
+                    localStorage.clear();
+                    window.location.href = 'auth.html';
+                    return;
+                }
+
+                const data = await resp.json();
+                if (!resp.ok) {
+                    const msg = (data && (data.error || (data.details && data.details[0]?.message))) || 'Erro ao carregar detalhes';
+                    showAlert(msg, 'error');
+                    return;
+                }
+
+                document.getElementById('detailsTitle').textContent = `Agendamento #${data.id}`;
+                document.getElementById('detailsStatus').textContent = statusLabel(data.status);
+                document.getElementById('detailsQuando').textContent = formatDateTime(data.data_hora);
+                document.getElementById('detailsMotivo').textContent = data.tipo_consulta || '-';
+
+                // Vet
+                document.getElementById('detailsVetNome').textContent = data.veterinarios?.nome || '-';
+                document.getElementById('detailsVetCrmv').textContent = data.veterinarios?.crmv || '-';
+                const esp = data.veterinarios?.especialidades;
+                document.getElementById('detailsVetEsp').textContent = Array.isArray(esp) ? (esp.join(', ') || '-') : (esp || '-');
+
+                // Pet
+                document.getElementById('detailsPetNome').textContent = data.pets?.nome || '-';
+                document.getElementById('detailsPetEspecie').textContent = data.pets?.especie || '-';
+                document.getElementById('detailsPetRaca').textContent = data.pets?.raca || 'Não informado';
+                document.getElementById('detailsPetSexo').textContent = data.pets?.sexo === 'F_mea' ? 'Fêmea' : (data.pets?.sexo || '-');
+                if (data.pets?.data_nascimento) {
+                    const nasc = new Date(data.pets.data_nascimento);
+                    document.getElementById('detailsPetNasc').textContent = nasc.toLocaleDateString('pt-BR');
+                    document.getElementById('detailsPetIdadeRow').style.display = 'block';
+                } else {
+                    document.getElementById('detailsPetIdadeRow').style.display = 'none';
+                }
+
+                // Historicos
+                const hisList = document.getElementById('detailsHistoricos');
+                const hisEmpty = document.getElementById('detailsHistoricosEmpty');
+                hisList.innerHTML = '';
+                if (data.historicos_clinicos && data.historicos_clinicos.length) {
+                    hisEmpty.style.display = 'none';
+                    data.historicos_clinicos.forEach(h => {
+                        const li = document.createElement('li');
+                        const when = new Date(h.created_at);
+                        const resumo = [h.vacinas, h.medicamentos, h.observacoes].filter(Boolean).join(' • ');
+                        li.textContent = `${when.toLocaleDateString('pt-BR')} - ${resumo || 'Atendimento'}`;
+                        hisList.appendChild(li);
+                    });
+                } else {
+                    hisEmpty.style.display = 'block';
+                }
+
+                loading.style.display = 'none';
+                content.style.display = 'block';
+            } catch (err) {
+                loading.style.display = 'none';
+                showAlert('Erro de conexão ao carregar detalhes', 'error');
+            }
+        }
+
+        function closeDetails() {
+            document.getElementById('agendamentoDetailsModal').classList.remove('active');
+        }
+
+        // UX: fechar modais com ESC e clique fora
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+                closeDetails();
+            }
+        });
+        document.getElementById('agendamentoModal').addEventListener('click', (e) => {
+            if (e.target.id === 'agendamentoModal') closeModal();
+        });
+        document.getElementById('agendamentoDetailsModal').addEventListener('click', (e) => {
+            if (e.target.id === 'agendamentoDetailsModal') closeDetails();
+        });
+
+        async function init() {
+            await loadPets();
+            await loadVeterinarios();
+            await loadAgendamentos();
+
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('dataConsulta').setAttribute('min', today);
+        }
+
+        init();
+    </script>
+</body>
+
+</html>

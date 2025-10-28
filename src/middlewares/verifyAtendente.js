@@ -11,12 +11,14 @@ const verifyAtendente = (req, res, next) => {
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
 
-        if (decoded.tipo !== 'atendente' && decoded.tipo !== 'admin') {
+        const isAtendente = decoded.tipo === 'atendente';
+        const isAdmin = decoded.tipo === 'admin' || decoded.role === 'admin';
+        if (!isAtendente && !isAdmin) {
             return res.status(403).json({ message: 'Acesso negado: apenas atendentes ou administradores' });
         }
 
-        req.atendenteId = decoded.id;
-        req.tipo = decoded.tipo;
+        req.atendenteId = decoded.id || decoded.userId;
+        req.tipo = isAdmin ? 'admin' : 'atendente';
         next();
     } catch (error) {
         logger.error(`Erro ao verificar token atendente: ${error.message}`);

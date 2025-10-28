@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DuskPet API - Menu Principal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .user-info {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .user-info span {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #c82333;
+            transform: translateY(-2px);
+        }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .menu-item {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 30px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .menu-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        .menu-item.admin {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .menu-item.atendente {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .menu-item.public {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .menu-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .menu-item h3 {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+        }
+
+        .menu-item p {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            margin-top: 10px;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .login-required {
+            background: #fff3cd;
+            color: #856404;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🐾 DuskPet API</h1>
+            <p>Sistema de Gestão Veterinária - Interface de Testes</p>
+        </div>
+
+        <div class="user-info hidden" id="userInfo">
+            <span id="userName">Usuário: Não logado</span>
+            <button class="logout-btn" onclick="logout()">Sair</button>
+        </div>
+
+        <div class="login-required hidden" id="loginRequired">
+            ⚠️ Faça login para acessar todas as funcionalidades
+        </div>
+
+        <div class="menu-grid">
+            <!-- Autenticação -->
+            <a href="auth.html" class="menu-item public">
+                <div class="menu-icon">🔐</div>
+                <h3>Autenticação</h3>
+                <p>Login e Registro de usuários</p>
+                <span class="badge">Público</span>
+            </a>
+
+            <!-- Perfil -->
+            <a href="profile.html" class="menu-item">
+                <div class="menu-icon">👤</div>
+                <h3>Perfil</h3>
+                <p>Visualizar e editar perfil</p>
+                <span class="badge">Protegido</span>
+            </a>
+
+            <!-- Pets -->
+            <a href="pets.html" class="menu-item">
+                <div class="menu-icon">🐕</div>
+                <h3>Pets</h3>
+                <p>Gerenciar pets e imagens</p>
+                <span class="badge">Protegido</span>
+            </a>
+
+            <!-- Agendamentos -->
+            <a href="agendamentos.html" class="menu-item">
+                <div class="menu-icon">📅</div>
+                <h3>Agendamentos</h3>
+                <p>Consultas e horários</p>
+                <span class="badge">Protegido</span>
+            </a>
+
+            <!-- Históricos -->
+            <a href="historicos.html" class="menu-item">
+                <div class="menu-icon">📋</div>
+                <h3>Históricos</h3>
+                <p>Histórico médico dos pets</p>
+                <span class="badge">Protegido</span>
+            </a>
+
+            <!-- Produtos -->
+            <a href="produtos.html" class="menu-item">
+                <div class="menu-icon">🛒</div>
+                <h3>Produtos</h3>
+                <p>Catálogo e estoque</p>
+                <span class="badge">Protegido</span>
+            </a>
+
+            <!-- Veterinários -->
+            <a href="veterinarios.html" class="menu-item public">
+                <div class="menu-icon">👨‍⚕️</div>
+                <h3>Veterinários</h3>
+                <p>Lista de veterinários</p>
+                <span class="badge">Público</span>
+            </a>
+
+            <!-- Admin -->
+            <a href="admin.html" class="menu-item admin">
+                <div class="menu-icon">⚙️</div>
+                <h3>Painel Admin</h3>
+                <p>Dashboard e relatórios</p>
+                <span class="badge">Admin</span>
+            </a>
+
+            <!-- Atendente -->
+            <a href="atendente.html" class="menu-item atendente">
+                <div class="menu-icon">💼</div>
+                <h3>Painel Atendente</h3>
+                <p>Gestão de clientes</p>
+                <span class="badge">Atendente</span>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const userName = localStorage.getItem('userName');
+            const userType = localStorage.getItem('userType');
+
+            if (token) {
+                document.getElementById('userInfo').classList.remove('hidden');
+                document.getElementById('userName').textContent = `Usuário: ${userName || 'Logado'}`;
+                document.getElementById('loginRequired').classList.add('hidden');
+                const adminLink = document.querySelector('a[href="admin.html"]');
+                const atendenteLink = document.querySelector('a[href="atendente.html"]');
+                if (adminLink && userType !== 'admin') adminLink.style.display = 'none';
+                if (atendenteLink && !(userType === 'atendente' || userType === 'admin')) atendenteLink.style.display = 'none';
+                // Oculta paineis de cliente quando logado como admin
+                if (userType === 'admin') {
+                    ['profile.html', 'pets.html', 'agendamentos.html', 'historicos.html']
+                        .forEach(href => { const el = document.querySelector(`a[href="${href}"]`); if (el) el.style.display = 'none'; });
+                }
+                // (Opcional) Oculta paineis de cliente quando logado como atendente
+                if (userType === 'atendente') {
+                    ['profile.html', 'pets.html', 'agendamentos.html', 'historicos.html']
+                        .forEach(href => { const el = document.querySelector(`a[href="${href}"]`); if (el) el.style.display = 'none'; });
+                }
+            } else {
+                document.getElementById('userInfo').classList.add('hidden');
+                document.getElementById('loginRequired').classList.remove('hidden');
+                const adminLink = document.querySelector('a[href="admin.html"]');
+                const atendenteLink = document.querySelector('a[href="atendente.html"]');
+                if (adminLink) adminLink.style.display = 'none';
+                if (atendenteLink) atendenteLink.style.display = 'none';
+            }
+        }
+
+        function logout() {
+            localStorage.clear();
+            alert('Logout realizado com sucesso!');
+            checkAuth();
+        }
+
+        checkAuth();
+    </script>
+</body>
+
+</html>

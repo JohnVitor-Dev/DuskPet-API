@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DuskPet API - Painel Admin</title>
+</head>
+
+<body>
+    <div class="container">
+        <a href="menu.html" class="back-btn">← Voltar ao Menu</a>
+
+        <div class="header">
+            <h1>⚙️ Painel Administrativo</h1>
+            <p>Dashboard e gestão completa do sistema</p>
+        </div>
+
+        <div class="alert" id="alert"></div>
+
+        <!-- Dashboard -->
+        <div class="dashboard-grid" id="dashboardGrid">
+            <div class="stat-card">
+                <div class="stat-icon">👥</div>
+                <div class="stat-info">
+                    <h3 id="totalClientes">-</h3>
+                    <p>Clientes</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🐾</div>
+                <div class="stat-info">
+                    <h3 id="totalPets">-</h3>
+                    <p>Pets</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📅</div>
+                <div class="stat-info">
+                    <h3 id="totalAgendamentos">-</h3>
+                    <p>Agendamentos</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">👨‍⚕️</div>
+                <div class="stat-info">
+                    <h3 id="totalVeterinarios">-</h3>
+                    <p>Veterinários</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gestão de Veterinários -->
+        <div class="section">
+            <div class="section-header">
+                <h2>👨‍⚕️ Gestão de Veterinários</h2>
+                <button class="btn" onclick="openVetModal()">➕ Adicionar</button>
+            </div>
+            <div id="veterinariosTable" class="table-container"></div>
+        </div>
+
+        <!-- Clientes -->
+        <div class="section">
+            <div class="section-header">
+                <h2>👥 Clientes Cadastrados</h2>
+            </div>
+            <div id="clientesTable" class="table-container"></div>
+        </div>
+
+        <!-- Relatórios -->
+        <div class="section">
+            <div class="section-header">
+                <h2>📊 Relatórios</h2>
+            </div>
+            <div class="report-filters"
+                style="display:flex; gap:12px; align-items:center; margin-bottom:16px; flex-wrap:wrap;">
+                <label>Início:
+                    <input type="date" id="dataInicio">
+                </label>
+                <label>Fim:
+                    <input type="date" id="dataFim">
+                </label>
+                <button class="btn" id="btnRelatorio">Gerar Relatório</button>
+            </div>
+            <div id="relatorioContainer"></div>
+        </div>
+    </div>
+
+    <!-- Modal Veterinário -->
+    <div id="vetModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Adicionar Veterinário</h2>
+                <button class="close-btn" onclick="closeVetModal()">&times;</button>
+            </div>
+            <form id="vetForm" onsubmit="handleSaveVet(event)">
+                <input type="hidden" id="vetId">
+                <div class="form-group">
+                    <label>Nome:</label>
+                    <input type="text" id="vetNome" required>
+                </div>
+                <div class="form-group">
+                    <label>CPF:</label>
+                    <input type="text" id="vetCpf" required>
+                </div>
+                <div class="form-group">
+                    <label>CRMV:</label>
+                    <input type="text" id="vetCrmv" required>
+                </div>
+                <div class="form-group">
+                    <label>Especialidades:</label>
+                    <input type="text" id="vetEspecialidades" placeholder="Ex: Clínica Geral">
+                </div>
+                <div class="form-group">
+                    <label>Horários de Trabalho:</label>
+                    <textarea id="vetHorarios" rows="3" placeholder="Ex: Segunda a Sexta, 8h às 18h"></textarea>
+                </div>
+                <button type="submit" class="btn" id="saveBtn">Salvar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Cliente -->
+    <div id="clienteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Detalhes do Cliente</h2>
+                <button class="close-btn" onclick="closeClienteModal()">&times;</button>
+            </div>
+            <div id="clienteDetails"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000';
+
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const userType = localStorage.getItem('userType');
+            if (!token || userType !== 'admin') {
+                alert('Acesso negado! Faça login como admin.');
+                window.location.href = 'auth.html';
+                return false;
+            }
+            return true;
+        }
+
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.textContent = message;
+            alert.className = `alert ${type} show`;
+            setTimeout(() => alert.classList.remove('show'), 5000);
+        }
+
+        async function loadDashboard() {
+            if (!checkAuth()) return;
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/admin/dashboard`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.status === 401) {
+                    localStorage.clear();
+                    window.location.href = 'auth.html';
+                    return;
+                }
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('totalClientes').textContent = data.totalClientes;
+                    document.getElementById('totalPets').textContent = data.totalPets;
+                    document.getElementById('totalAgendamentos').textContent = data.totalAgendamentos;
+                    document.getElementById('totalVeterinarios').textContent = data.totalVeterinarios;
+                }
+            } catch (error) {
+                showAlert('Erro ao carregar dashboard', 'error');
+            }
+        }
+
+        async function loadVeterinarios() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/admin/veterinarios`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.status === 401) {
+                    localStorage.clear();
+                    window.location.href = 'auth.html';
+                    return;
+                }
+
+                if (response.ok) {
+                    const vets = await response.json();
+                    // mantém em memória para edição
+                    window.__vets = vets;
+                    const container = document.getElementById('veterinariosTable');
+                    container.innerHTML = `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>CPF</th>
+                                    <th>CRMV</th>
+                                    <th>Especialidades</th>
+                                    <th>Agendamentos</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${vets.map(v => `
+                                    <tr>
+                                        <td>${v.nome}</td>
+                                        <td>${v.cpf || '-'}</td>
+                                        <td>${v.crmv}</td>
+                                        <td>${Array.isArray(v.especialidades) ? (v.especialidades.join(', ') || '-') : (v.especialidades || '-')}</td>
+                                        <td>${v._count && v._count.agendamentos ? v._count.agendamentos : 0}</td>
+                                        <td>
+                                            <button class="btn-small btn-edit" onclick="editVet(${v.id})">Editar</button>
+                                            <button class="btn-small btn-delete" onclick="deleteVet(${v.id}, '${v.nome}')">Excluir</button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                }
+            } catch (error) {
+                showAlert('Erro ao carregar veterinários', 'error');
+            }
+        }
+
+        async function loadClientes() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/admin/clientes`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.status === 401) {
+                    localStorage.clear();
+                    window.location.href = 'auth.html';
+                    return;
+                }
+
+                if (response.ok) {
+                    const clientes = await response.json();
+                    const container = document.getElementById('clientesTable');
+                    container.innerHTML = `
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>Email</th>
+                                    <th>Telefone</th>
+                                    <th>Cadastro</th>
+                                    <th>Pets</th>
+                                    <th>Agendamentos</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${clientes.map(c => `
+                                    <tr>
+                                        <td>${c.nome}</td>
+                                        <td>${c.email}</td>
+                                        <td>${c.celular || '-'}</td>
+                                        <td>${new Date(c.created_at).toLocaleDateString('pt-BR')}</td>
+                                        <td>${c._count?.pets ?? '-'}</td>
+                                        <td>${c._count?.agendamentos ?? '-'}</td>
+                                        <td><button class="btn-small btn-edit" onclick="viewCliente(${c.id})">Detalhes</button></td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    `;
+                }
+            } catch (error) {
+                showAlert('Erro ao carregar clientes', 'error');
+            }
+        }
+
+        function openVetModal() {
+            document.getElementById('modalTitle').textContent = 'Adicionar Veterinário';
+            document.getElementById('vetForm').reset();
+            document.getElementById('vetId').value = '';
+            document.getElementById('vetModal').classList.add('active');
+        }
+
+        function closeVetModal() {
+            document.getElementById('vetModal').classList.remove('active');
+        }
+
+        async function handleSaveVet(e) {
+            e.preventDefault();
+            const btn = document.getElementById('saveBtn');
+            btn.disabled = true;
+            btn.textContent = 'Salvando...';
+
+            try {
+                const token = localStorage.getItem('token');
+                // prepara campos conforme schema (especialidades: array, horarios_trabalho: JSON)
+                const espStr = document.getElementById('vetEspecialidades').value.trim();
+                let horarios = document.getElementById('vetHorarios').value.trim();
+                let horariosJson = null;
+                if (horarios) {
+                    try { horariosJson = JSON.parse(horarios); } catch (_) { horariosJson = horarios; }
+                }
+
+                const data = {
+                    nome: document.getElementById('vetNome').value,
+                    cpf: document.getElementById('vetCpf').value,
+                    crmv: document.getElementById('vetCrmv').value,
+                    especialidades: espStr ? espStr.split(',').map(s => s.trim()).filter(Boolean) : [],
+                    horarios_trabalho: horariosJson
+                };
+
+                const id = document.getElementById('vetId').value;
+                const url = id ? `${API_URL}/admin/veterinarios/${id}` : `${API_URL}/admin/veterinarios`;
+                const method = id ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    showAlert('Veterinário salvo com sucesso!', 'success');
+                    closeVetModal();
+                    await loadVeterinarios();
+                    await loadDashboard();
+                } else {
+                    const result = await response.json();
+                    showAlert(result.message || 'Erro ao salvar', 'error');
+                }
+            } catch (error) {
+                showAlert('Erro de conexão', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Salvar';
+            }
+        }
+
+        function editVet(id) {
+            const vet = (window.__vets || []).find(v => v.id === id);
+            if (!vet) return;
+            document.getElementById('modalTitle').textContent = 'Editar Veterinário';
+            document.getElementById('vetId').value = vet.id;
+            document.getElementById('vetNome').value = vet.nome || '';
+            document.getElementById('vetCpf').value = vet.cpf || '';
+            document.getElementById('vetCrmv').value = vet.crmv || '';
+            document.getElementById('vetEspecialidades').value = Array.isArray(vet.especialidades) ? vet.especialidades.join(', ') : (vet.especialidades || '');
+            document.getElementById('vetHorarios').value = vet.horarios_trabalho ? (typeof vet.horarios_trabalho === 'string' ? vet.horarios_trabalho : JSON.stringify(vet.horarios_trabalho, null, 2)) : '';
+            document.getElementById('vetModal').classList.add('active');
+        }
+
+        async function deleteVet(id, nome) {
+            if (!confirm(`Excluir veterinário ${nome}?`)) return;
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/admin/veterinarios/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.status === 401) {
+                    localStorage.clear();
+                    window.location.href = 'auth.html';
+                    return;
+                }
+
+                if (response.ok) {
+                    showAlert('Veterinário excluído!', 'success');
+                    await loadVeterinarios();
+                    await loadDashboard();
+                } else {
+                    const result = await response.json();
+                    showAlert(result.message || 'Erro ao excluir', 'error');
+                }
+            } catch (error) {
+                showAlert('Erro de conexão', 'error');
+            }
+        }
+
+        async function viewCliente(id) {
+            if (!checkAuth()) return;
+            const token = localStorage.getItem('token');
+            try {
+                const resp = await fetch(`${API_URL}/admin/clientes/${id}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (resp.status === 401) {
+                    localStorage.clear();
+                    window.location.href = 'auth.html';
+                    return;
+                }
+
+                if (!resp.ok) {
+                    const r = await resp.json().catch(() => ({}));
+                    showAlert(r.message || 'Erro ao carregar detalhes do cliente', 'error');
+                    return;
+                }
+
+                const c = await resp.json();
+                const petsHtml = (c.pets || []).map(p => `
+                    <li>${p.nome} • ${p.especie || '-'} • ${p.raca || '-'}</li>
+                `).join('') || '<li>Nenhum pet</li>';
+
+                const agsHtml = (c.agendamentos || []).map(a => `
+                    <li>${new Date(a.data_hora).toLocaleString('pt-BR')} • ${a.tipo_consulta || '-'} • ${a.veterinarios?.nome || '-'}</li>
+                `).join('') || '<li>Nenhum agendamento</li>';
+
+                document.getElementById('clienteDetails').innerHTML = `
+                    <p><strong>Nome:</strong> ${c.nome}</p>
+                    <p><strong>Email:</strong> ${c.email}</p>
+                    <p><strong>Telefone:</strong> ${c.celular || '-'}</p>
+                    <p><strong>Cadastrado em:</strong> ${c.created_at ? new Date(c.created_at).toLocaleString('pt-BR') : '-'}</p>
+                    <div style="margin-top:16px; display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
+                        <div>
+                            <h3>Pets</h3>
+                            <ul>${petsHtml}</ul>
+                        </div>
+                        <div>
+                            <h3>Agendamentos</h3>
+                            <ul>${agsHtml}</ul>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('clienteModal').classList.add('active');
+            } catch (e) {
+                showAlert('Erro de conexão', 'error');
+            }
+        }
+
+        function closeClienteModal() {
+            document.getElementById('clienteModal').classList.remove('active');
+        }
+
+        function formatCurrencyBRL(v) {
+            try { return (v ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); } catch { return `R$ ${v}`; }
+        }
+
+        async function gerarRelatorio() {
+            if (!checkAuth()) return;
+            const token = localStorage.getItem('token');
+            const di = document.getElementById('dataInicio').value;
+            const df = document.getElementById('dataFim').value;
+            let url = `${API_URL}/admin/relatorio`;
+            const params = new URLSearchParams();
+            if (di) params.append('dataInicio', di);
+            if (df) params.append('dataFim', df);
+            if ([...params].length) url += `?${params.toString()}`;
+
+            try {
+                const resp = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+
+                if (resp.status === 401) {
+                    localStorage.clear();
+                    window.location.href = 'auth.html';
+                    return;
+                }
+
+                if (!resp.ok) {
+                    const r = await resp.json().catch(() => ({}));
+                    showAlert(r.message || 'Erro ao gerar relatório', 'error');
+                    return;
+                }
+
+                const rel = await resp.json();
+                const container = document.getElementById('relatorioContainer');
+                container.innerHTML = `
+                    <div class="dashboard-grid" style="margin-top:0;">
+                        <div class="stat-card">
+                            <div class="stat-icon">🆕</div>
+                            <div class="stat-info">
+                                <h3>${rel.novosClientes}</h3>
+                                <p>Novos Clientes</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">🐾</div>
+                            <div class="stat-info">
+                                <h3>${rel.novosPets}</h3>
+                                <p>Novos Pets</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">✅</div>
+                            <div class="stat-info">
+                                <h3>${rel.agendamentosRealizados}</h3>
+                                <p>Agendamentos Concluídos</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon">💰</div>
+                            <div class="stat-info">
+                                <h3>${formatCurrencyBRL(rel.valorTotalEstoque)}</h3>
+                                <p>Valor total em estoque</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-container" style="margin-top:12px;">
+                        <h3 style="margin-bottom:8px;">Top Veterinários</h3>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Nome</th>
+                                    <th>CRMV</th>
+                                    <th>Agendamentos</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${(rel.topVeterinarios || []).map(v => `
+                                    <tr>
+                                        <td>${v.nome}</td>
+                                        <td>${v.crmv || '-'}</td>
+                                        <td>${v._count?.agendamentos ?? 0}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            } catch (e) {
+                showAlert('Erro de conexão', 'error');
+            }
+        }
+
+        async function init() {
+            // adiciona botão de sair no topo
+            const backBtn = document.querySelector('.back-btn');
+            if (backBtn) {
+                const logout = document.createElement('button');
+                logout.textContent = 'Sair';
+                logout.className = 'btn';
+                logout.style.marginLeft = '10px';
+                logout.onclick = () => { localStorage.clear(); window.location.href = 'auth.html'; };
+                backBtn.parentNode.insertBefore(logout, backBtn.nextSibling);
+            }
+            const btnRel = document.getElementById('btnRelatorio');
+            if (btnRel) btnRel.addEventListener('click', gerarRelatorio);
+
+            // fechar modal clicando fora
+            document.getElementById('vetModal').addEventListener('click', (e) => {
+                if (e.target.id === 'vetModal') closeVetModal();
+            });
+            document.getElementById('clienteModal').addEventListener('click', (e) => {
+                if (e.target.id === 'clienteModal') closeClienteModal();
+            });
+
+            // ESC fecha modais
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') { closeVetModal(); closeClienteModal(); }
+            });
+            await loadDashboard();
+            await loadVeterinarios();
+            await loadClientes();
+        }
+
+        init();
+    </script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 8px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+        }
+
+        .stat-info h3 {
+            font-size: 2em;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .stat-info p {
+            color: #666;
+        }
+
+        .section {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .section-header h2 {
+            color: #333;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        th {
+            background: #f8f9fa;
+            color: #333;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .btn-small {
+            padding: 6px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            margin-right: 5px;
+        }
+
+        .btn-edit {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 600px;
+            width: 90%;
+            margin: 20px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            color: #f5576c;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 2em;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .alert.show {
+            display: block;
+        }
+    </style>
+</body>
+
+</html>

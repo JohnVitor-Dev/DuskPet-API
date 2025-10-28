@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DuskPet API - Gerenciar Pets</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 8px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            gap: 20px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(255, 255, 255, 0.3);
+        }
+
+        .search-box {
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .pets-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .pet-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+        }
+
+        .pet-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .pet-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 4em;
+        }
+
+        .pet-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .pet-info {
+            padding: 20px;
+        }
+
+        .pet-name {
+            font-size: 1.5em;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .pet-details {
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .pet-details p {
+            margin-bottom: 5px;
+        }
+
+        .pet-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-small {
+            flex: 1;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-edit {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-small:hover {
+            opacity: 0.8;
+            transform: translateY(-2px);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            margin: 20px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            color: #667eea;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 2em;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .image-preview {
+            width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .empty-state {
+            background: white;
+            padding: 60px 40px;
+            border-radius: 15px;
+            text-align: center;
+            color: #666;
+        }
+
+        .empty-state-icon {
+            font-size: 5em;
+            margin-bottom: 20px;
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.2em;
+            padding: 40px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <a href="menu.html" class="back-btn">← Voltar ao Menu</a>
+
+        <div class="header">
+            <h1>🐾 Gerenciar Pets</h1>
+            <p>Adicione, edite e visualize seus pets</p>
+        </div>
+
+        <div class="alert" id="alert"></div>
+
+        <div class="actions">
+            <button class="btn" onclick="openCreateModal()">➕ Adicionar Pet</button>
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Buscar pet por nome..." onkeyup="filterPets()">
+            </div>
+        </div>
+
+        <div id="loadingDiv" class="loading">
+            Carregando pets...
+        </div>
+
+        <div id="petsGrid" class="pets-grid"></div>
+
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <div class="empty-state-icon">🐶</div>
+            <h2>Nenhum pet cadastrado</h2>
+            <p>Clique em "Adicionar Pet" para cadastrar seu primeiro pet</p>
+        </div>
+    </div>
+
+    <!-- Modal Criar/Editar -->
+    <div id="petModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Adicionar Pet</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="petForm" onsubmit="handleSavePet(event)">
+                <input type="hidden" id="petId">
+                <div class="form-group">
+                    <label>Nome do Pet:</label>
+                    <input type="text" id="petNome" required minlength="2">
+                </div>
+                <div class="form-group">
+                    <label>Espécie:</label>
+                    <select id="petEspecie" required>
+                        <option value="">Selecione...</option>
+                        <option value="Cachorro">Cachorro</option>
+                        <option value="Gato">Gato</option>
+                        <option value="Pássaro">Pássaro</option>
+                        <option value="Outro">Outro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Raça:</label>
+                    <input type="text" id="petRaca">
+                </div>
+                <div class="form-group">
+                    <label>Sexo:</label>
+                    <select id="petSexo" required>
+                        <option value="">Selecione...</option>
+                        <option value="Macho">Macho</option>
+                        <option value="Fêmea">Fêmea</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Data de Nascimento:</label>
+                    <input type="date" id="petDataNascimento">
+                </div>
+                <div class="form-group">
+                    <label>Foto do Pet:</label>
+                    <input type="file" id="petImagem" accept="image/*" onchange="previewImage(event)">
+                    <img id="imagePreview" class="image-preview">
+                </div>
+                <button type="submit" class="btn" id="saveBtn">Salvar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Detalhes do Pet -->
+    <div id="petDetailsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="detailsTitle">Detalhes do Pet</h2>
+                <button class="close-btn" onclick="closeDetails()">&times;</button>
+            </div>
+            <div id="detailsBody">
+                <div id="detailsLoading" class="loading" style="color:#333; padding:10px;">Carregando detalhes...</div>
+                <div id="detailsContent" style="display:none;">
+                    <div style="display:flex; gap:16px; align-items:flex-start; margin-bottom: 20px;">
+                        <div id="detailsImage" class="pet-image"
+                            style="width:160px; height:160px; border-radius:12px; flex:0 0 auto; font-size:3rem;">
+                            🐾
+                        </div>
+                        <div>
+                            <h3 id="detailsNome" style="margin-bottom:8px; color:#333;"></h3>
+                            <div style="color:#555; line-height:1.6;">
+                                <div><strong>Espécie:</strong> <span id="detailsEspecie"></span></div>
+                                <div><strong>Raça:</strong> <span id="detailsRaca"></span></div>
+                                <div><strong>Sexo:</strong> <span id="detailsSexo"></span></div>
+                                <div id="detailsIdadeRow" style="display:none;"><strong>Idade:</strong> <span
+                                        id="detailsIdade"></span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:16px;">
+                        <div style="background:#f9fafb; border:1px solid #eee; border-radius:10px; padding:16px;">
+                            <h3 style="margin-bottom:10px; color:#667eea;">Históricos recentes</h3>
+                            <ul id="detailsHistoricos" style="list-style:none; padding-left:0; margin:0; color:#444;">
+                            </ul>
+                            <div id="detailsHistoricosEmpty" style="color:#777;">Sem históricos clínicos recentes.</div>
+                        </div>
+                        <div style="background:#f9fafb; border:1px solid #eee; border-radius:10px; padding:16px;">
+                            <h3 style="margin-bottom:10px; color:#667eea;">Agendamentos recentes</h3>
+                            <ul id="detailsAgendamentos" style="list-style:none; padding-left:0; margin:0; color:#444;">
+                            </ul>
+                            <div id="detailsAgendamentosEmpty" style="color:#777;">Sem agendamentos recentes.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000';
+        let pets = [];
+        let editingPetId = null;
+
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.textContent = message;
+            alert.className = `alert ${type} show`;
+            setTimeout(() => alert.classList.remove('show'), 5000);
+        }
+
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const userType = localStorage.getItem('userType');
+            if (!token) {
+                alert('Você precisa fazer login primeiro!');
+                window.location.href = 'auth.html';
+                return false;
+            }
+            if (userType !== 'cliente') {
+                alert('Acesso restrito aos clientes.');
+                if (userType === 'admin') window.location.href = 'admin.html';
+                else if (userType === 'atendente') window.location.href = 'atendente.html';
+                else window.location.href = 'auth.html';
+                return false;
+            }
+            return true;
+        }
+
+        async function loadPets() {
+            if (!checkAuth()) return;
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/protected/pets`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.status === 401) {
+                    alert('Sessão expirada. Faça login novamente.');
+                    localStorage.clear();
+                    window.location.href = 'auth.html';
+                    return;
+                }
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    pets = data;
+                    displayPets(pets);
+                } else {
+                    showAlert('Erro ao carregar pets', 'error');
+                }
+            } catch (error) {
+                showAlert('Erro de conexão com o servidor', 'error');
+            } finally {
+                document.getElementById('loadingDiv').style.display = 'none';
+            }
+        }
+
+        function displayPets(petsToDisplay) {
+            const grid = document.getElementById('petsGrid');
+            const emptyState = document.getElementById('emptyState');
+
+            if (petsToDisplay.length === 0) {
+                grid.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            grid.innerHTML = petsToDisplay.map(pet => `
+                <div class="pet-card">
+                    <div class="pet-image" id="petImage${pet.id}">
+                        ${pet.tem_imagem ? '' : getAnimalIcon(pet.especie)}
+                    </div>
+                    <div class="pet-info">
+                        <div class="pet-name">${pet.nome}</div>
+                        <div class="pet-details">
+                            <p><strong>Espécie:</strong> ${pet.especie}</p>
+                            <p><strong>Raça:</strong> ${pet.raca || 'Não informado'}</p>
+                            <p><strong>Sexo:</strong> ${pet.sexo === 'F_mea' ? 'Fêmea' : (pet.sexo || '-')}</p>
+                            
+                            ${pet.data_nascimento ? `<p><strong>Idade:</strong> ${calculateAge(pet.data_nascimento)}</p>` : ''}
+                        </div>
+                        <div class="pet-actions">
+                            <button class="btn-small" style="background:#10b981; color:white;" onclick="viewPet(${pet.id})">Detalhes</button>
+                            <button class="btn-small btn-edit" onclick="editPet(${pet.id})">Editar</button>
+                            <button class="btn-small btn-delete" onclick="deletePet(${pet.id}, '${pet.nome}')">Excluir</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            petsToDisplay.forEach(pet => {
+                if (pet.tem_imagem) {
+                    loadPetImage(pet.id);
+                }
+            });
+        }
+
+        async function loadPetImage(petId) {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/protected/pets/${petId}/imagem`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const imageUrl = URL.createObjectURL(blob);
+                    const imageDiv = document.getElementById(`petImage${petId}`);
+                    if (imageDiv) {
+                        imageDiv.innerHTML = `<img src="${imageUrl}" alt="Pet">`;
+                    }
+                } else if (response.status === 401) {
+                    alert('Sessão expirada. Faça login novamente.');
+                    localStorage.clear();
+                    window.location.href = 'auth.html';
+                    return;
+                }
+            } catch (error) {
+                console.error('Erro ao carregar imagem:', error);
+            }
+        }
+
+        function getAnimalIcon(especie) {
+            const icons = {
+                'Cachorro': '🐶',
+                'Gato': '🐱',
+                'Pássaro': '🐦',
+                'Outro': '🐾'
+            };
+            return icons[especie] || '🐾';
+        }
+
+        function calculateAge(birthDate) {
+            const birth = new Date(birthDate);
+            const today = new Date();
+            const years = today.getFullYear() - birth.getFullYear();
+            const months = today.getMonth() - birth.getMonth();
+
+            if (years > 0) {
+                return `${years} ano${years > 1 ? 's' : ''}`;
+            } else if (months > 0) {
+                return `${months} mes${months > 1 ? 'es' : ''}`;
+            } else {
+                return 'Menos de 1 mês';
+            }
+        }
+
+        function filterPets() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = pets.filter(pet =>
+                pet.nome.toLowerCase().includes(search)
+            );
+            displayPets(filtered);
+        }
+
+        function openCreateModal() {
+            editingPetId = null;
+            document.getElementById('modalTitle').textContent = 'Adicionar Pet';
+            document.getElementById('petForm').reset();
+            document.getElementById('petId').value = '';
+            document.getElementById('imagePreview').src = '';
+            document.getElementById('petImagem').value = '';
+            document.getElementById('petModal').classList.add('active');
+        }
+
+        async function editPet(petId) {
+            const pet = pets.find(p => p.id === petId);
+            if (!pet) return;
+
+            editingPetId = petId;
+            document.getElementById('modalTitle').textContent = 'Editar Pet';
+            document.getElementById('petId').value = pet.id;
+            document.getElementById('petNome').value = pet.nome;
+            document.getElementById('petEspecie').value = pet.especie;
+            document.getElementById('petRaca').value = pet.raca || '';
+            document.getElementById('petSexo').value = (pet.sexo === 'F_mea' ? 'Fêmea' : pet.sexo);
+            document.getElementById('petDataNascimento').value = pet.data_nascimento ? pet.data_nascimento.split('T')[0] : '';
+
+            if (pet.tem_imagem) {
+                const token = localStorage.getItem('token');
+                const imageUrl = `${API_URL}/protected/pets/${petId}/imagem`;
+                const response = await fetch(imageUrl, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const blob = await response.blob();
+                    document.getElementById('imagePreview').src = URL.createObjectURL(blob);
+                }
+            } else {
+                document.getElementById('imagePreview').src = '';
+            }
+
+            document.getElementById('petModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('petModal').classList.remove('active');
+        }
+
+        function previewImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    document.getElementById('imagePreview').src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function handleSavePet(e) {
+            e.preventDefault();
+            const btn = document.getElementById('saveBtn');
+            btn.disabled = true;
+            btn.textContent = 'Salvando...';
+
+            try {
+                const token = localStorage.getItem('token');
+                const formData = new FormData();
+
+                formData.append('nome', document.getElementById('petNome').value);
+                formData.append('especie', document.getElementById('petEspecie').value);
+                formData.append('raca', document.getElementById('petRaca').value);
+                formData.append('sexo', document.getElementById('petSexo').value);
+                formData.append('data_nascimento', document.getElementById('petDataNascimento').value);
+
+                const imageFile = document.getElementById('petImagem').files[0];
+                if (imageFile) {
+                    formData.append('imagem', imageFile);
+                }
+
+                const petId = document.getElementById('petId').value;
+                const url = petId
+                    ? `${API_URL}/protected/pets/${petId}`
+                    : `${API_URL}/protected/pets`;
+
+                const method = petId ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                let data = {};
+                try { data = await response.json(); } catch (_) { }
+
+                if (response.ok) {
+                    showAlert(`Pet ${petId ? 'atualizado' : 'criado'} com sucesso!`, 'success');
+                    closeModal();
+                    await loadPets();
+                } else {
+                    const errorMsg = (data.details && data.details[0] && data.details[0].message)
+                        || data.error
+                        || 'Erro ao salvar pet';
+                    showAlert(errorMsg || 'Erro ao salvar pet', 'error');
+                }
+            } catch (error) {
+                showAlert('Erro de conexão com o servidor', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Salvar';
+            }
+        }
+
+        async function deletePet(petId, petName) {
+            if (!confirm(`Tem certeza que deseja excluir ${petName}?`)) {
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/protected/pets/${petId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    showAlert('Pet excluído com sucesso!', 'success');
+                    await loadPets();
+                } else {
+                    let data = {};
+                    try { data = await response.json(); } catch (_) { }
+                    const msg = (data && (data.error || (data.details && data.details[0]?.message))) || 'Erro ao excluir pet';
+                    showAlert(msg, 'error');
+                }
+            } catch (error) {
+                showAlert('Erro de conexão com o servidor', 'error');
+            }
+        }
+
+        async function viewPet(petId) {
+            if (!checkAuth()) return;
+            const modal = document.getElementById('petDetailsModal');
+            const loading = document.getElementById('detailsLoading');
+            const content = document.getElementById('detailsContent');
+            const imgBox = document.getElementById('detailsImage');
+            modal.classList.add('active');
+            loading.style.display = 'block';
+            content.style.display = 'none';
+
+            try {
+                const token = localStorage.getItem('token');
+                const resp = await fetch(`${API_URL}/protected/pets/${petId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (resp.status === 401) {
+                    alert('Sessão expirada. Faça login novamente.');
+                    localStorage.clear();
+                    window.location.href = 'auth.html';
+                    return;
+                }
+
+                const data = await resp.json();
+                if (!resp.ok) {
+                    const msg = (data && (data.error || (data.details && data.details[0]?.message))) || 'Erro ao carregar detalhes';
+                    showAlert(msg, 'error');
+                    return;
+                }
+
+                document.getElementById('detailsTitle').textContent = `Detalhes do Pet #${data.id}`;
+                document.getElementById('detailsNome').textContent = data.nome;
+                document.getElementById('detailsEspecie').textContent = data.especie;
+                document.getElementById('detailsRaca').textContent = data.raca || 'Não informado';
+                document.getElementById('detailsSexo').textContent = (data.sexo === 'F_mea' ? 'Fêmea' : (data.sexo || '-'));
+
+                if (data.data_nascimento) {
+                    document.getElementById('detailsIdade').textContent = calculateAge(data.data_nascimento);
+                    document.getElementById('detailsIdadeRow').style.display = 'block';
+                } else {
+                    document.getElementById('detailsIdadeRow').style.display = 'none';
+                }
+
+                // imagem
+                imgBox.innerHTML = getAnimalIcon(data.especie);
+                if (data.tem_imagem) {
+                    try {
+                        const imgResp = await fetch(`${API_URL}/protected/pets/${petId}/imagem`, {
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        if (imgResp.ok) {
+                            const blob = await imgResp.blob();
+                            const url = URL.createObjectURL(blob);
+                            imgBox.innerHTML = `<img src="${url}" alt="Pet" style="width:100%; height:100%; object-fit:cover; border-radius:10px;"/>`;
+                        }
+                    } catch (_) { /* ignore */ }
+                }
+
+                // historicos
+                const historicosList = document.getElementById('detailsHistoricos');
+                const historicosEmpty = document.getElementById('detailsHistoricosEmpty');
+                historicosList.innerHTML = '';
+                if (data.historicos_clinicos && data.historicos_clinicos.length) {
+                    historicosEmpty.style.display = 'none';
+                    data.historicos_clinicos.forEach(h => {
+                        const li = document.createElement('li');
+                        const created = new Date(h.created_at);
+                        li.textContent = `${created.toLocaleDateString()} - ${h.descricao || 'Histórico clínico'}`;
+                        historicosList.appendChild(li);
+                    });
+                } else {
+                    historicosEmpty.style.display = 'block';
+                }
+
+                // agendamentos
+                const agList = document.getElementById('detailsAgendamentos');
+                const agEmpty = document.getElementById('detailsAgendamentosEmpty');
+                agList.innerHTML = '';
+                if (data.agendamentos && data.agendamentos.length) {
+                    agEmpty.style.display = 'none';
+                    data.agendamentos.forEach(a => {
+                        const when = new Date(a.data_hora);
+                        const vet = a.veterinarios ? ` com Dr(a). ${a.veterinarios.nome} (${a.veterinarios.especialidades || 'Clínico'})` : '';
+                        const li = document.createElement('li');
+                        li.textContent = `${when.toLocaleDateString()} ${when.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}${vet}`;
+                        agList.appendChild(li);
+                    });
+                } else {
+                    agEmpty.style.display = 'block';
+                }
+
+                loading.style.display = 'none';
+                content.style.display = 'block';
+            } catch (err) {
+                loading.style.display = 'none';
+                showAlert('Erro de conexão ao carregar detalhes', 'error');
+            }
+        }
+
+        function closeDetails() {
+            document.getElementById('petDetailsModal').classList.remove('active');
+        }
+
+        // UX: fechar modais com ESC e clique fora
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+                closeDetails();
+            }
+        });
+        document.getElementById('petModal').addEventListener('click', (e) => {
+            if (e.target.id === 'petModal') closeModal();
+        });
+        document.getElementById('petDetailsModal').addEventListener('click', (e) => {
+            if (e.target.id === 'petDetailsModal') closeDetails();
+        });
+
+        loadPets();
+    </script>
+</body>
+
+</html>

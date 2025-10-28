@@ -10,7 +10,7 @@ const register = async (req, res) => {
 
     if (!name || !phone || !email || !password) {
         logger.warn('Tentativa de registro com campos faltando', { email });
-        return res.status(400).json({ error: 'All fields are required' });
+        return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
     }
 
     if (!JWT_SECRET) {
@@ -22,7 +22,7 @@ const register = async (req, res) => {
         const existingUser = await prisma.clientes.findUnique({ where: { email } });
         if (existingUser) {
             logger.warn('Tentativa de registro com email já existente', { email, ip: req.ip });
-            return res.status(400).json({ error: 'User already exists' });
+            return res.status(400).json({ error: 'Usuário já existe' });
         }
 
         const hashedPassword = await bcrypt.hash(password, 8);
@@ -42,10 +42,17 @@ const register = async (req, res) => {
         );
 
         logger.info('Novo usuário registrado', { userId: newUser.id, email: newUser.email });
-        res.status(201).json({ token });
+        res.status(201).json({
+            token,
+            user: {
+                name: newUser.nome,
+                email: newUser.email,
+                id: newUser.id
+            }
+        });
     } catch (error) {
         logger.error('Erro no registro', { error: error.message, stack: error.stack, email });
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Erro interno do servidor' });
     }
 };
 

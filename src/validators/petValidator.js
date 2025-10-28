@@ -34,13 +34,7 @@ const petValidation = [
                 throw new Error('Data de nascimento não pode ser no futuro');
             }
             return true;
-        }),
-    body('imagem_url')
-        .optional()
-        .isURL()
-        .withMessage('URL da imagem inválida')
-        .isLength({ max: 255 })
-        .withMessage('URL da imagem deve ter no máximo 255 caracteres')
+        })
 ];
 
 const petUpdateValidation = [
@@ -77,13 +71,7 @@ const petUpdateValidation = [
                 }
             }
             return true;
-        }),
-    body('imagem_url')
-        .optional()
-        .isURL()
-        .withMessage('URL da imagem inválida')
-        .isLength({ max: 255 })
-        .withMessage('URL da imagem deve ter no máximo 255 caracteres')
+        })
 ];
 
 const petIdValidation = [

@@ -29,7 +29,7 @@ const getVeterinarios = async (req, res) => {
         res.json(veterinarios);
     } catch (error) {
         logger.error('Erro ao listar veterinários', { error: error.message, stack: error.stack });
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Erro interno do servidor' });
     }
 };
 
@@ -51,14 +51,14 @@ const getVeterinarioById = async (req, res) => {
 
         if (!veterinario) {
             logger.warn('Veterinário não encontrado', { veterinarioId: id });
-            return res.status(404).json({ error: 'Veterinarian not found' });
+            return res.status(404).json({ error: 'Veterinário não encontrado' });
         }
 
         logger.info('Detalhes do veterinário acessados', { veterinarioId: id });
         res.json(veterinario);
     } catch (error) {
         logger.error('Erro ao buscar veterinário', { error: error.message, stack: error.stack, veterinarioId: id });
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Erro interno do servidor' });
     }
 };
 

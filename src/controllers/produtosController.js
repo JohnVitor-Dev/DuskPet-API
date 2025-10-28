@@ -11,7 +11,7 @@ const createProduto = async (req, res) => {
 
         if (produtoExistente) {
             logger.warn('Tentativa de cadastrar produto duplicado', { nome_produto });
-            return res.status(400).json({ error: 'Product already exists' });
+            return res.status(400).json({ error: 'Produto já existe' });
         }
 
         const novoProduto = await prisma.produtos_estoque.create({
@@ -27,7 +27,7 @@ const createProduto = async (req, res) => {
         res.status(201).json(novoProduto);
     } catch (error) {
         logger.error('Erro ao cadastrar produto', { error: error.message, stack: error.stack, nome_produto });
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Erro interno do servidor' });
     }
 };
 
@@ -59,7 +59,7 @@ const getProdutos = async (req, res) => {
         res.json(produtos);
     } catch (error) {
         logger.error('Erro ao listar produtos', { error: error.message, stack: error.stack });
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Erro interno do servidor' });
     }
 };
 
@@ -73,14 +73,14 @@ const getProdutoById = async (req, res) => {
 
         if (!produto) {
             logger.warn('Produto não encontrado', { produtoId: id });
-            return res.status(404).json({ error: 'Product not found' });
+            return res.status(404).json({ error: 'Produto não encontrado' });
         }
 
         logger.info('Detalhes do produto acessados', { produtoId: id });
         res.json(produto);
     } catch (error) {
         logger.error('Erro ao buscar produto', { error: error.message, stack: error.stack, produtoId: id });
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Erro interno do servidor' });
     }
 };
 
@@ -95,7 +95,7 @@ const updateProduto = async (req, res) => {
 
         if (!produto) {
             logger.warn('Produto não encontrado para atualização', { produtoId: id });
-            return res.status(404).json({ error: 'Product not found' });
+            return res.status(404).json({ error: 'Produto não encontrado' });
         }
 
         if (nome_produto && nome_produto !== produto.nome_produto) {
@@ -105,7 +105,7 @@ const updateProduto = async (req, res) => {
 
             if (produtoComMesmoNome) {
                 logger.warn('Tentativa de atualizar para nome duplicado', { nome_produto, produtoId: id });
-                return res.status(400).json({ error: 'Product name already exists' });
+                return res.status(400).json({ error: 'Nome do produto já existe' });
             }
         }
 
@@ -125,7 +125,7 @@ const updateProduto = async (req, res) => {
         res.json(produtoAtualizado);
     } catch (error) {
         logger.error('Erro ao atualizar produto', { error: error.message, stack: error.stack, produtoId: id });
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Erro interno do servidor' });
     }
 };
 
@@ -139,7 +139,7 @@ const deleteProduto = async (req, res) => {
 
         if (!produto) {
             logger.warn('Produto não encontrado para exclusão', { produtoId: id });
-            return res.status(404).json({ error: 'Product not found' });
+            return res.status(404).json({ error: 'Produto não encontrado' });
         }
 
         await prisma.produtos_estoque.delete({
@@ -147,10 +147,10 @@ const deleteProduto = async (req, res) => {
         });
 
         logger.info('Produto excluído', { produtoId: id, nome: produto.nome_produto });
-        res.json({ message: 'Product deleted successfully' });
+        res.json({ message: 'Produto excluído com sucesso' });
     } catch (error) {
         logger.error('Erro ao excluir produto', { error: error.message, stack: error.stack, produtoId: id });
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Erro interno do servidor' });
     }
 };
 
@@ -165,7 +165,7 @@ const ajustarEstoque = async (req, res) => {
 
         if (!produto) {
             logger.warn('Produto não encontrado para ajuste de estoque', { produtoId: id });
-            return res.status(404).json({ error: 'Product not found' });
+            return res.status(404).json({ error: 'Produto não encontrado' });
         }
 
         let novaQuantidade;
@@ -175,10 +175,10 @@ const ajustarEstoque = async (req, res) => {
             novaQuantidade = produto.quantidade - quantidade;
             if (novaQuantidade < 0) {
                 logger.warn('Tentativa de remover mais produtos do que disponível', { produtoId: id, quantidade, disponivel: produto.quantidade });
-                return res.status(400).json({ error: 'Insufficient stock' });
+                return res.status(400).json({ error: 'Estoque insuficiente' });
             }
         } else {
-            return res.status(400).json({ error: 'Invalid operation. Use "adicionar" or "remover"' });
+            return res.status(400).json({ error: 'Operação inválida. Use "adicionar" ou "remover"' });
         }
 
         const produtoAtualizado = await prisma.produtos_estoque.update({
@@ -191,12 +191,12 @@ const ajustarEstoque = async (req, res) => {
 
         logger.info('Estoque ajustado', { produtoId: id, operacao, quantidade, novaQuantidade });
         res.json({
-            message: 'Stock adjusted successfully',
+            message: 'Estoque ajustado com sucesso',
             produto: produtoAtualizado
         });
     } catch (error) {
         logger.error('Erro ao ajustar estoque', { error: error.message, stack: error.stack, produtoId: id });
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Erro interno do servidor' });
     }
 };
 
@@ -251,7 +251,7 @@ const getRelatorioEstoque = async (req, res) => {
         });
     } catch (error) {
         logger.error('Erro ao gerar relatório de estoque', { error: error.message, stack: error.stack });
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ error: 'Erro interno do servidor' });
     }
 };
 

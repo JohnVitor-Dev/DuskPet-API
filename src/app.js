@@ -1,11 +1,14 @@
 const express = require('express');
+const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const app = express();
+
+app.use(cors());
 
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 5,
-    message: { error: 'Too many login attempts, please try again later' },
+    message: { error: 'Muitas tentativas de login, tente novamente mais tarde' },
     standardHeaders: true,
     legacyHeaders: false,
 });
@@ -13,7 +16,7 @@ const loginLimiter = rateLimit({
 const registerLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 10,
-    message: { error: 'Too many registration attempts, please try again later' },
+    message: { error: 'Muitas tentativas de registro, tente novamente mais tarde' },
     standardHeaders: true,
     legacyHeaders: false,
     skip: (req) => process.env.NODE_ENV === 'test',
@@ -22,7 +25,7 @@ const registerLimiter = rateLimit({
 const generalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 100,
-    message: { error: 'Too many requests, please try again later' },
+    message: { error: 'Muitas requisições, tente novamente mais tarde' },
     standardHeaders: true,
     legacyHeaders: false,
 });
@@ -40,13 +43,14 @@ const historicosRoute = require('./api/routes/historicosRoute');
 const produtosRoute = require('./api/routes/produtosRoute');
 
 const verifyToken = require('./middlewares/verifyToken');
+const verifyCliente = require('./middlewares/verifyCliente');
 
 app.use(generalLimiter);
 
 app.use(express.json({ limit: '10kb' }));
 
 app.get('/', (req, res) => {
-    res.send('Welcome to the API');
+    res.send('Bem-vindo à API DuskPet');
 });
 
 app.use('/login', loginLimiter, loginRoute);
@@ -55,7 +59,8 @@ app.use('/veterinarios', veterinariosRoute);
 app.use('/admin', adminRoute);
 app.use('/atendente', atendenteRoute);
 
-app.use('/protected', verifyToken);
+// Rotas do app do cliente: exigem token válido e perfil de cliente
+app.use('/protected', verifyToken, verifyCliente);
 
 app.use('/protected/profile', profileRoute);
 app.use('/protected/pets', petsRoute);

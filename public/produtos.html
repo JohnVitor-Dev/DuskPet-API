@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DuskPet API - Produtos</title>
+</head>
+
+<body>
+    <div class="container">
+        <a href="menu.html" class="back-btn">← Voltar ao Menu</a>
+
+        <div class="header">
+            <h1>🛒 Produtos</h1>
+            <p>Gerencie o catálogo e estoque de produtos</p>
+        </div>
+
+        <div class="alert" id="alert"></div>
+
+        <div class="actions">
+            <button class="btn" onclick="openCreateModal()">➕ Adicionar Produto</button>
+            <button class="btn btn-secondary" onclick="loadRelatorio()">📊 Relatório de Estoque</button>
+        </div>
+
+        <div id="loadingDiv" class="loading">Carregando produtos...</div>
+        <div id="produtosGrid" class="produtos-grid"></div>
+    </div>
+
+    <!-- Modal Criar/Editar -->
+    <div id="produtoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Adicionar Produto</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="produtoForm" onsubmit="handleSaveProduto(event)">
+                <input type="hidden" id="produtoId">
+                <div class="form-group">
+                    <label>Nome do Produto:</label>
+                    <input type="text" id="nome_produto" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Valor (R$):</label>
+                        <input type="number" id="valor" step="0.01" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Quantidade:</label>
+                        <input type="number" id="quantidade" min="0" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Validade:</label>
+                    <input type="date" id="validade">
+                </div>
+                <button type="submit" class="btn" id="saveBtn">Salvar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Ajustar Estoque -->
+    <div id="estoqueModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Ajustar Estoque</h2>
+                <button class="close-btn" onclick="closeEstoqueModal()">&times;</button>
+            </div>
+            <form onsubmit="handleAjustarEstoque(event)">
+                <input type="hidden" id="estoqueProductId">
+                <div class="form-group">
+                    <label>Tipo de Ajuste:</label>
+                    <select id="tipoAjuste" required>
+                        <option value="adicionar">Adicionar ao estoque</option>
+                        <option value="remover">Remover do estoque</option>
+                        <option value="definir">Definir estoque</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Quantidade:</label>
+                    <input type="number" id="estoqueQuantidade" min="0" required>
+                </div>
+                <div class="form-group">
+                    <label>Motivo:</label>
+                    <textarea id="motivo" rows="2"></textarea>
+                </div>
+                <button type="submit" class="btn">Confirmar Ajuste</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000';
+        let produtos = [];
+
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                alert('Faça login primeiro!');
+                window.location.href = 'auth.html';
+                return false;
+            }
+            return true;
+        }
+
+        function isStaff() {
+            const t = localStorage.getItem('userType');
+            return t === 'admin' || t === 'atendente';
+        }
+
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.textContent = message;
+            alert.className = `alert ${type} show`;
+            setTimeout(() => alert.classList.remove('show'), 5000);
+        }
+
+        async function loadProdutos() {
+            if (!checkAuth()) return;
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/protected/produtos`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    produtos = await response.json();
+                    displayProdutos(produtos);
+                }
+            } catch (error) {
+                showAlert('Erro de conexão', 'error');
+            } finally {
+                document.getElementById('loadingDiv').style.display = 'none';
+            }
+        }
+
+        function displayProdutos(produtosToDisplay) {
+            const grid = document.getElementById('produtosGrid');
+            const staff = isStaff();
+            grid.innerHTML = produtosToDisplay.map(p => `
+                <div class="produto-card">
+                    <div class="produto-header">
+                        <h3>${p.nome_produto}</h3>
+                    </div>
+                    <div class="produto-info">
+                        <div class="preco">R$ ${Number(p.valor).toFixed(2)}</div>
+                        <div class="estoque ${p.quantidade < 10 ? 'estoque-baixo' : ''}">
+                            Estoque: ${p.quantidade}
+                        </div>
+                    </div>
+                    ${staff ? `
+                    <div class=\"produto-actions\">
+                        <button class=\"btn-small btn-edit\" onclick=\"editProduto(${p.id})\">Editar</button>
+                        <button class=\"btn-small btn-primary\" onclick=\"openEstoqueModal(${p.id})\">Ajustar Estoque</button>
+                        <button class=\"btn-small btn-delete\" onclick=\"deleteProduto(${p.id}, '${p.nome_produto}')\">Excluir</button>
+                    </div>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function openCreateModal() {
+            if (!isStaff()) { showAlert('Apenas atendentes ou administradores podem gerenciar produtos.', 'error'); return; }
+            document.getElementById('modalTitle').textContent = 'Adicionar Produto';
+            document.getElementById('produtoForm').reset();
+            document.getElementById('produtoId').value = '';
+            document.getElementById('produtoModal').classList.add('active');
+        }
+
+        function editProduto(id) {
+            if (!isStaff()) { showAlert('Apenas atendentes ou administradores podem gerenciar produtos.', 'error'); return; }
+            const produto = produtos.find(p => p.id === id);
+            if (!produto) return;
+
+            document.getElementById('modalTitle').textContent = 'Editar Produto';
+            document.getElementById('produtoId').value = produto.id;
+            document.getElementById('nome_produto').value = produto.nome_produto;
+            document.getElementById('valor').value = Number(produto.valor);
+            document.getElementById('quantidade').value = produto.quantidade;
+            document.getElementById('validade').value = produto.validade ? new Date(produto.validade).toISOString().split('T')[0] : '';
+            document.getElementById('produtoModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('produtoModal').classList.remove('active');
+        }
+
+        async function handleSaveProduto(e) {
+            e.preventDefault();
+            if (!isStaff()) { showAlert('Apenas atendentes ou administradores podem gerenciar produtos.', 'error'); return; }
+            const btn = document.getElementById('saveBtn');
+            btn.disabled = true;
+            btn.textContent = 'Salvando...';
+
+            try {
+                const token = localStorage.getItem('token');
+                const data = {
+                    nome_produto: document.getElementById('nome_produto').value,
+                    valor: parseFloat(document.getElementById('valor').value),
+                    quantidade: parseInt(document.getElementById('quantidade').value),
+                    validade: document.getElementById('validade').value || null
+                };
+
+                const id = document.getElementById('produtoId').value;
+                const url = id ? `${API_URL}/protected/produtos/${id}` : `${API_URL}/protected/produtos`;
+                const method = id ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    showAlert('Produto salvo com sucesso!', 'success');
+                    closeModal();
+                    await loadProdutos();
+                } else {
+                    const result = await response.json();
+                    showAlert(result.error || 'Erro ao salvar', 'error');
+                }
+            } catch (error) {
+                showAlert('Erro de conexão', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Salvar';
+            }
+        }
+
+        async function deleteProduto(id, nome) {
+            if (!isStaff()) { showAlert('Apenas atendentes ou administradores podem gerenciar produtos.', 'error'); return; }
+            if (!confirm(`Excluir ${nome}?`)) return;
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/protected/produtos/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    showAlert('Produto excluído!', 'success');
+                    await loadProdutos();
+                } else {
+                    showAlert('Erro ao excluir', 'error');
+                }
+            } catch (error) {
+                showAlert('Erro de conexão', 'error');
+            }
+        }
+
+        function openEstoqueModal(id) {
+            if (!isStaff()) { showAlert('Apenas atendentes ou administradores podem gerenciar produtos.', 'error'); return; }
+            document.getElementById('estoqueProductId').value = id;
+            document.getElementById('tipoAjuste').value = 'adicionar';
+            document.getElementById('estoqueQuantidade').value = '';
+            document.getElementById('motivo').value = '';
+            document.getElementById('estoqueModal').classList.add('active');
+        }
+
+        function closeEstoqueModal() {
+            document.getElementById('estoqueModal').classList.remove('active');
+        }
+
+        async function handleAjustarEstoque(e) {
+            e.preventDefault();
+            if (!isStaff()) { showAlert('Apenas atendentes ou administradores podem gerenciar produtos.', 'error'); return; }
+
+            try {
+                const token = localStorage.getItem('token');
+                const id = document.getElementById('estoqueProductId').value;
+                const tipo = document.getElementById('tipoAjuste').value;
+                const quantidade = parseInt(document.getElementById('estoqueQuantidade').value);
+                const motivo = document.getElementById('motivo').value;
+
+                let operacao = tipo;
+                let qtd = quantidade;
+                if (tipo === 'definir') {
+                    const produto = produtos.find(p => String(p.id) === String(id));
+                    const atual = produto ? (produto.quantidade || 0) : 0;
+                    const delta = quantidade - atual;
+                    operacao = delta >= 0 ? 'adicionar' : 'remover';
+                    qtd = Math.abs(delta);
+                    if (qtd === 0) {
+                        showAlert('Quantidade já está definida com este valor.', 'success');
+                        closeEstoqueModal();
+                        return;
+                    }
+                }
+
+                const response = await fetch(`${API_URL}/protected/produtos/${id}/estoque`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ operacao, quantidade: qtd })
+                });
+
+                if (response.ok) {
+                    showAlert('Estoque ajustado!', 'success');
+                    closeEstoqueModal();
+                    await loadProdutos();
+                } else {
+                    showAlert('Erro ao ajustar estoque', 'error');
+                }
+            } catch (error) {
+                showAlert('Erro de conexão', 'error');
+            }
+        }
+
+        async function loadRelatorio() {
+            if (!isStaff()) { showAlert('Apenas atendentes ou administradores podem ver o relatório.', 'error'); return; }
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/protected/produtos/relatorio`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    let msg = `📊 RELATÓRIO DE ESTOQUE\n\n`;
+                    msg += `Total de produtos: ${data.total_produtos}\n`;
+                    msg += `Quantidade total em estoque: ${data.quantidade_total_estoque}\n`;
+                    msg += `Produtos com estoque baixo (≤10): ${data.estoque_baixo}\n`;
+                    msg += `Produtos vencendo em 30 dias: ${data.produtos_vencendo}\n`;
+                    msg += `Produtos vencidos: ${data.produtos_vencidos}\n`;
+                    msg += `Valor total em estoque: R$ ${Number(data.valor_total_estoque).toFixed(2)}`;
+                    alert(msg);
+                }
+            } catch (error) {
+                showAlert('Erro ao gerar relatório', 'error');
+            }
+        }
+
+        function initUI() {
+            const staff = isStaff();
+            const actions = document.querySelector('.actions');
+            if (actions && !staff) {
+                const addBtn = actions.querySelector('button');
+                const relBtn = actions.querySelector('.btn-secondary');
+                if (addBtn) addBtn.style.display = 'none';
+                if (relBtn) relBtn.style.display = 'none';
+            }
+        }
+
+        initUI();
+        loadProdutos();
+    </script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 8px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .btn,
+        .btn-secondary {
+            padding: 12px 30px;
+            background: white;
+            color: #667eea;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn:hover,
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+        }
+
+        .produtos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .produto-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .produto-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .produto-header h3 {
+            color: #333;
+        }
+
+        .categoria-badge {
+            padding: 4px 12px;
+            background: #667eea;
+            color: white;
+            border-radius: 12px;
+            font-size: 0.8em;
+        }
+
+        .produto-descricao {
+            color: #666;
+            margin-bottom: 15px;
+            min-height: 40px;
+        }
+
+        .produto-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .preco {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #28a745;
+        }
+
+        .estoque {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .estoque-baixo {
+            color: #dc3545;
+        }
+
+        .produto-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+        }
+
+        .btn-small {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-edit {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-primary {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 600px;
+            width: 90%;
+            margin: 20px;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            color: #667eea;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 2em;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            padding: 40px;
+        }
+    </style>
+</body>
+
+</html>

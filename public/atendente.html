@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DuskPet API - Painel Atendente</title>
+</head>
+
+<body>
+    <div class="container">
+        <a href="menu.html" class="back-btn">← Voltar ao Menu</a>
+
+        <div class="header">
+            <h1>💼 Painel do Atendente</h1>
+            <p>Gestão de clientes e agendamentos</p>
+        </div>
+
+        <div class="alert" id="alert"></div>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('agendamentos')">📅 Agendamentos</button>
+            <button class="tab" onclick="switchTab('clientes')">👥 Clientes</button>
+            <button class="tab" onclick="switchTab('produtos')">🛒 Produtos</button>
+            <button class="tab" onclick="switchTab('veterinarios')">👨‍⚕️ Veterinários</button>
+        </div>
+
+        <!-- Agendamentos -->
+        <div id="agendamentosTab" class="tab-content active">
+            <div class="section-header">
+                <h2>Agendamentos</h2>
+                <div class="filters">
+                    <input type="date" id="dataFilter" onchange="loadAgendamentos()" title="Filtrar por data">
+                    <select id="statusFilterAg" onchange="loadAgendamentos()" title="Filtrar por status">
+                        <option value="">Todos os status</option>
+                        <option value="Agendado">Agendado</option>
+                        <option value="Conclu_do">Concluído</option>
+                        <option value="Cancelado">Cancelado</option>
+                    </select>
+                </div>
+            </div>
+            <div id="agendamentosContainer"></div>
+        </div>
+
+        <!-- Clientes -->
+        <div id="clientesTab" class="tab-content">
+            <div class="section-header">
+                <h2>Clientes Cadastrados</h2>
+                <input type="text" id="buscaCliente" placeholder="Buscar cliente..." onkeyup="loadClientes()">
+            </div>
+            <div id="clientesContainer"></div>
+        </div>
+
+        <!-- Produtos -->
+        <div id="produtosTab" class="tab-content">
+            <h2>Catálogo de Produtos</h2>
+            <div id="produtosContainer"></div>
+        </div>
+
+        <!-- Veterinários -->
+        <div id="veterinariosTab" class="tab-content">
+            <h2>Veterinários Disponíveis</h2>
+            <div id="veterinariosContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000';
+
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            const userType = localStorage.getItem('userType');
+            if (!token || (userType !== 'atendente' && userType !== 'admin')) {
+                alert('Acesso negado! Faça login como atendente.');
+                window.location.href = 'auth.html';
+                return false;
+            }
+            return true;
+        }
+
+        function showAlert(message, type) {
+            const alert = document.getElementById('alert');
+            alert.textContent = message;
+            alert.className = `alert ${type} show`;
+            setTimeout(() => alert.classList.remove('show'), 5000);
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            const clickedTab = Array.from(document.querySelectorAll('.tab')).find(t => t.onclick && t.onclick.toString().includes(`'${tabName}'`));
+            if (clickedTab) clickedTab.classList.add('active');
+            document.getElementById(`${tabName}Tab`).classList.add('active');
+
+            switch (tabName) {
+                case 'agendamentos':
+                    loadAgendamentos();
+                    break;
+                case 'clientes':
+                    loadClientes();
+                    break;
+                case 'produtos':
+                    loadProdutos();
+                    break;
+                case 'veterinarios':
+                    loadVeterinarios();
+                    break;
+            }
+        }
+
+        async function loadAgendamentos() {
+            if (!checkAuth()) return;
+
+            try {
+                const token = localStorage.getItem('token');
+                const data = document.getElementById('dataFilter').value;
+                const status = document.getElementById('statusFilterAg').value;
+
+                let url = `${API_URL}/atendente/agendamentos?`;
+                if (data) url += `data=${data}&`;
+                if (status) url += `status=${status}`;
+
+                const response = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const agendamentos = await response.json();
+                    displayAgendamentos(agendamentos);
+                }
+            } catch (error) {
+                showAlert('Erro ao carregar agendamentos', 'error');
+            }
+        }
+
+        function statusSlug(status) {
+            if (status === 'Conclu_do' || status === 'Concluído') return 'concluido';
+            if (status === 'Agendado') return 'agendado';
+            if (status === 'Cancelado') return 'cancelado';
+            return String(status || '').toLowerCase();
+        }
+
+        function statusLabel(status) {
+            if (status === 'Conclu_do') return 'Concluído';
+            return status;
+        }
+
+        function displayAgendamentos(agendamentos) {
+            const container = document.getElementById('agendamentosContainer');
+            if (agendamentos.length === 0) {
+                container.innerHTML = '<p class="empty">Nenhum agendamento encontrado</p>';
+                return;
+            }
+
+            container.innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data/Hora</th>
+                            <th>Cliente</th>
+                            <th>Pet</th>
+                            <th>Veterinário</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${agendamentos.map(a => `
+                            <tr>
+                                <td>${formatDateTime(a.data_hora)}</td>
+                                <td>${a.clientes.nome}</td>
+                                <td>${a.pets.nome}</td>
+                                <td>${a.veterinarios.nome}</td>
+                                <td><span class="status-badge status-${statusSlug(a.status)}">${statusLabel(a.status)}</span></td>
+                                <td>
+                                    ${a.status === 'Agendado' ? `
+                                        <button class=\"btn-small btn-primary\" onclick=\"updateStatus(${a.id}, 'Conclu_do')\">Concluir</button>
+                                        <button class=\"btn-small btn-success\" onclick=\"updateStatus(${a.id}, 'Cancelado')\">Cancelar</button>
+                                    ` : ''}
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        async function updateStatus(id, status) {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/atendente/agendamentos/${id}/status`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ status })
+                });
+
+                if (response.ok) {
+                    showAlert('Status atualizado!', 'success');
+                    await loadAgendamentos();
+                }
+            } catch (error) {
+                showAlert('Erro ao atualizar status', 'error');
+            }
+        }
+
+        async function loadClientes() {
+            if (!checkAuth()) return;
+
+            try {
+                const token = localStorage.getItem('token');
+                const busca = document.getElementById('buscaCliente').value;
+                const url = busca
+                    ? `${API_URL}/atendente/clientes?busca=${busca}`
+                    : `${API_URL}/atendente/clientes`;
+
+                const response = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const clientes = await response.json();
+                    displayClientes(clientes);
+                }
+            } catch (error) {
+                showAlert('Erro ao carregar clientes', 'error');
+            }
+        }
+
+        function displayClientes(clientes) {
+            const container = document.getElementById('clientesContainer');
+            if (clientes.length === 0) {
+                container.innerHTML = '<p class="empty">Nenhum cliente encontrado</p>';
+                return;
+            }
+
+            container.innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Email</th>
+                            <th>Telefone</th>
+                            <th>Cadastro</th>
+                            <th>Pets</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${clientes.map(c => `
+                            <tr>
+                                <td>${c.nome}</td>
+                                <td>${c.email}</td>
+                                <td>${c.celular}</td>
+                                <td>${new Date(c.created_at).toLocaleDateString('pt-BR')}</td>
+                                <td>${c._count?.pets || 0}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        async function loadProdutos() {
+            if (!checkAuth()) return;
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/atendente/produtos`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const produtos = await response.json();
+                    displayProdutos(produtos);
+                }
+            } catch (error) {
+                showAlert('Erro ao carregar produtos', 'error');
+            }
+        }
+
+        function displayProdutos(produtos) {
+            const container = document.getElementById('produtosContainer');
+            container.innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Produto</th>
+                            <th>Preço</th>
+                            <th>Estoque</th>
+                            <th>Validade</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${produtos.map(p => `
+                            <tr>
+                                <td>${p.nome_produto}</td>
+                                <td>R$ ${Number(p.valor).toFixed(2)}</td>
+                                <td class="${p.quantidade < 10 ? 'estoque-baixo' : ''}">${p.quantidade}</td>
+                                <td>${p.validade ? new Date(p.validade).toLocaleDateString('pt-BR') : '-'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        async function loadVeterinarios() {
+            if (!checkAuth()) return;
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/atendente/veterinarios`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.ok) {
+                    const veterinarios = await response.json();
+                    displayVeterinarios(veterinarios);
+                }
+            } catch (error) {
+                showAlert('Erro ao carregar veterinários', 'error');
+            }
+        }
+
+        function displayVeterinarios(veterinarios) {
+            const container = document.getElementById('veterinariosContainer');
+            container.innerHTML = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>CRMV</th>
+                            <th>Especialidades</th>
+                            <th>Horários</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${veterinarios.map(v => `
+                            <tr>
+                                <td>${v.nome}</td>
+                                <td>${v.crmv}</td>
+                                <td>${Array.isArray(v.especialidades) ? (v.especialidades.join(', ') || '-') : (v.especialidades || '-')}</td>
+                                <td>${v.horarios_trabalho ? (typeof v.horarios_trabalho === 'string' ? v.horarios_trabalho : JSON.stringify(v.horarios_trabalho)) : '-'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function formatDateTime(dateString) {
+            return new Date(dateString).toLocaleString('pt-BR');
+        }
+
+        loadAgendamentos();
+    </script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 8px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            background: white;
+            padding: 10px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            background: #f8f9fa;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .section-header h2 {
+            color: #333;
+        }
+
+        .section-header input,
+        .section-header select {
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .filters {
+            display: flex;
+            gap: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        th {
+            background: #f8f9fa;
+            color: #333;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .status-agendado {
+            background: #007bff;
+            color: white;
+        }
+
+        .status-confirmado {
+            background: #28a745;
+            color: white;
+        }
+
+        .status-concluido,
+        .status-conclu_do {
+            background: #6c757d;
+            color: white;
+        }
+
+        .status-cancelado {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-small {
+            padding: 6px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            margin-right: 5px;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .estoque-baixo {
+            color: #dc3545;
+            font-weight: 600;
+        }
+
+        .empty {
+            text-align: center;
+            color: #666;
+            padding: 40px;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .alert.show {
+            display: block;
+        }
+    </style>
+</body>
+
+</html>

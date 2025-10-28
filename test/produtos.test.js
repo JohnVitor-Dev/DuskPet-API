@@ -26,6 +26,7 @@ const testUser = {
 };
 
 let authToken = '';
+let staffToken = '';
 let produtoId = null;
 
 async function setupTestData() {
@@ -37,6 +38,36 @@ async function setupTestData() {
         const userResponse = await axios.post(`${BASE_URL}/register`, testUser);
         authToken = userResponse.data.token;
         log('✅ Usuário registrado', 'green');
+
+        // Autenticação para operações de escrita (tentar admin, depois atendente)
+        let staffObtido = false;
+        try {
+            log('\nEfetuando login como admin...', 'yellow');
+            const adminResp = await axios.post(`${BASE_URL}/admin/login`, {
+                email: 'admin@duskpet.com',
+                password: 'Admin123'
+            });
+            staffToken = adminResp.data.token;
+            staffObtido = true;
+            log('✅ Admin autenticado para operações de produtos', 'green');
+        } catch (e1) {
+            log('⚠️  Admin indisponível, tentando atendente...', 'yellow');
+            try {
+                const atendenteResp = await axios.post(`${BASE_URL}/atendente/login`, {
+                    email: 'atendente@duskpet.com',
+                    senha: 'atendente123'
+                });
+                staffToken = atendenteResp.data.token;
+                staffObtido = true;
+                log('✅ Atendente autenticado para operações de produtos', 'green');
+            } catch (e2) {
+                // continuar para erro geral abaixo
+            }
+        }
+
+        if (!staffObtido) {
+            throw new Error('Não foi possível autenticar admin nem atendente para testes de produtos');
+        }
 
         return true;
     } catch (error) {
@@ -54,7 +85,7 @@ async function testCreateProdutoValidation() {
             valor: 29.90,
             quantidade: 10
         }, {
-            headers: { Authorization: `Bearer ${authToken}` }
+            headers: { Authorization: `Bearer ${staffToken}` }
         });
         log('❌ FALHA: Deveria rejeitar sem nome', 'red');
     } catch (error) {
@@ -71,7 +102,7 @@ async function testCreateProdutoValidation() {
             nome_produto: 'Ração Premium',
             quantidade: 10
         }, {
-            headers: { Authorization: `Bearer ${authToken}` }
+            headers: { Authorization: `Bearer ${staffToken}` }
         });
         log('❌ FALHA: Deveria rejeitar sem valor', 'red');
     } catch (error) {
@@ -89,7 +120,7 @@ async function testCreateProdutoValidation() {
             valor: -10.00,
             quantidade: 10
         }, {
-            headers: { Authorization: `Bearer ${authToken}` }
+            headers: { Authorization: `Bearer ${staffToken}` }
         });
         log('❌ FALHA: Deveria rejeitar valor negativo', 'red');
     } catch (error) {
@@ -112,7 +143,7 @@ async function testCreateProdutoSuccess() {
             quantidade: 50,
             validade: '2026-12-31'
         }, {
-            headers: { Authorization: `Bearer ${authToken}` }
+            headers: { Authorization: `Bearer ${staffToken}` }
         });
 
         if (response.status === 201 && response.data.id) {
@@ -140,7 +171,7 @@ async function testCreateProdutoDuplicado() {
             valor: 199.90,
             quantidade: 30
         }, {
-            headers: { Authorization: `Bearer ${authToken}` }
+            headers: { Authorization: `Bearer ${staffToken}` }
         });
         log('❌ FALHA: Deveria rejeitar produto duplicado', 'red');
     } catch (error) {
@@ -202,7 +233,7 @@ async function testUpdateProduto() {
             valor: 199.90,
             quantidade: 45
         }, {
-            headers: { Authorization: `Bearer ${authToken}` }
+            headers: { Authorization: `Bearer ${staffToken}` }
         });
 
         if (response.status === 200 && parseFloat(response.data.valor) === 199.90) {
@@ -226,7 +257,7 @@ async function testAjustarEstoque() {
             quantidade: 10,
             operacao: 'adicionar'
         }, {
-            headers: { Authorization: `Bearer ${authToken}` }
+            headers: { Authorization: `Bearer ${staffToken}` }
         });
 
         if (addResponse.status === 200 && addResponse.data.produto.quantidade === 55) {
@@ -243,7 +274,7 @@ async function testAjustarEstoque() {
             quantidade: 5,
             operacao: 'remover'
         }, {
-            headers: { Authorization: `Bearer ${authToken}` }
+            headers: { Authorization: `Bearer ${staffToken}` }
         });
 
         if (removeResponse.status === 200 && removeResponse.data.produto.quantidade === 50) {
@@ -266,7 +297,7 @@ async function testAjustarEstoqueInsuficiente() {
             quantidade: 1000,
             operacao: 'remover'
         }, {
-            headers: { Authorization: `Bearer ${authToken}` }
+            headers: { Authorization: `Bearer ${staffToken}` }
         });
         log('❌ FALHA: Deveria rejeitar estoque insuficiente', 'red');
     } catch (error) {
@@ -284,7 +315,7 @@ async function testGetRelatorioEstoque() {
     try {
         log('\nBuscando relatório de estoque...', 'yellow');
         const response = await axios.get(`${BASE_URL}/protected/produtos/relatorio`, {
-            headers: { Authorization: `Bearer ${authToken}` }
+            headers: { Authorization: `Bearer ${staffToken}` }
         });
 
         if (response.status === 200 && response.data.total_produtos !== undefined) {
@@ -310,7 +341,7 @@ async function testGetProdutosFiltros() {
             valor: 15.90,
             quantidade: 5
         }, {
-            headers: { Authorization: `Bearer ${authToken}` }
+            headers: { Authorization: `Bearer ${staffToken}` }
         });
 
         await sleep(500);
@@ -337,7 +368,7 @@ async function testDeleteProduto() {
     try {
         log('\nDeletando produto...', 'yellow');
         const response = await axios.delete(`${BASE_URL}/protected/produtos/${produtoId}`, {
-            headers: { Authorization: `Bearer ${authToken}` }
+            headers: { Authorization: `Bearer ${staffToken}` }
         });
 
         if (response.status === 200) {
