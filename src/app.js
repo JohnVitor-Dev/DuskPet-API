@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
+const path = require('path');
 const app = express();
 
 app.use(cors());
@@ -49,6 +50,8 @@ app.use(generalLimiter);
 
 app.use(express.json({ limit: '10kb' }));
 
+app.use('/public', express.static(path.join(__dirname, '..', 'public')));
+
 app.get('/', (req, res) => {
     res.send('Bem-vindo à API DuskPet');
 });
@@ -59,7 +62,6 @@ app.use('/veterinarios', veterinariosRoute);
 app.use('/admin', adminRoute);
 app.use('/atendente', atendenteRoute);
 
-// Rotas do app do cliente: exigem token válido e perfil de cliente
 app.use('/protected', verifyToken, verifyCliente);
 
 app.use('/protected/profile', profileRoute);

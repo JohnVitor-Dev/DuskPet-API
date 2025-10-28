@@ -451,7 +451,7 @@
     </div>
 
     <script>
-        const API_URL = 'http://localhost:3000';
+        const API_URL = window.location.origin;
         let currentPets = [];
 
         // Carregar token do localStorage
@@ -667,7 +667,7 @@
                 <p style="margin-top: 15px; font-size: 0.9em;">
                     ${message.includes('Token') ?
                     'Certifique-se de que você está logado e usando um token válido.' :
-                    'Verifique se o servidor está rodando em http://localhost:3000'}
+                    `Verifique se o servidor está acessível em ${window.location.origin}`}
                 </p>
             `;
         }

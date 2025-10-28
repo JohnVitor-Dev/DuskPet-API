@@ -23,7 +23,11 @@
   "scripts": {
     "start": "node index.js",
     "test": "node test/api.test.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "postinstall": "prisma generate"
+  },
+  "engines": {
+    "node": "18.x || 20.x"
   },
   "repository": "git+https://github.com/JohnVitor-Dev/DuskPet-API.git",
   "author": "JohnVitor-Dev",

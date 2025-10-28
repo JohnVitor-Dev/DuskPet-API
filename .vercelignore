@@ -1,0 +1,9 @@
+# Do not upload local-only files to Vercel
+.vscode/
+.git/
+logs/
+scripts/
+test/
+*.log
+.DS_Store
+Thumbs.db

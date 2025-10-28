@@ -349,3 +349,27 @@ node test/historicos.test.js
 node test/produtos.test.js
 node test/admin.test.js
 ```
+
+---
+
+## ☁️ Deploy na Vercel
+
+Esta API está pronta para rodar como Serverless Functions na Vercel.
+
+1) Configure variáveis de ambiente (Project Settings > Environment Variables):
+- DATABASE_URL
+- JWT_SECRET_KEY
+- JWT_EXPIRATION (opcional)
+- LOG_LEVEL (opcional)
+
+2) Estrutura de deploy
+- Arquivo `vercel.json` já roteia tudo para `api/index.js` e serve estáticos de `public/`.
+- A Function exporta o app em `api/index.js` (não chama `app.listen`).
+- Prisma Client é gerado no `postinstall` automaticamente.
+
+3) Sobre testes na Vercel
+- Os testes são apenas para ambiente local. A Vercel não executará `npm test` porque não há `build` que os invoque e há `.vercelignore` ignorando a pasta `test/` no upload.
+
+4) Execução local
+- Para rodar localmente com Node: `npm start` (usa `index.js`).
+- Para simular a Vercel (opcional), use o Vercel CLI e crie um `.env` com base em `.env.example`.
