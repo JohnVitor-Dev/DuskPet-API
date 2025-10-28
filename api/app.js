@@ -5,6 +5,7 @@ const path = require('path');
 const app = express();
 
 app.use(cors());
+app.set('trust proxy', 1);
 
 const loginLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -46,11 +47,11 @@ const produtosRoute = require('./src/routes/produtosRoute');
 const verifyToken = require('./src/middlewares/verifyToken');
 const verifyCliente = require('./src/middlewares/verifyCliente');
 
+app.use('/public', express.static(path.join(__dirname, '..', 'public')));
+
 app.use(generalLimiter);
 
 app.use(express.json({ limit: '10kb' }));
-
-app.use('/public', express.static(path.join(__dirname, '..', 'public')));
 
 app.get('/', (req, res) => {
     res.send('Bem-vindo à API DuskPet');
