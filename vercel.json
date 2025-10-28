@@ -8,6 +8,13 @@
     ],
     "routes": [
         {
+            "src": "^/$",
+            "dest": "/api/index.js"
+        },
+        {
+            "handle": "filesystem"
+        },
+        {
             "src": "/public/(.*)",
             "dest": "/public/$1"
         },

@@ -50,10 +50,19 @@ app.use(generalLimiter);
 
 app.use(express.json({ limit: '10kb' }));
 
-app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use('/public', express.static(path.join(__dirname, '..', 'public')));
 
 app.get('/', (req, res) => {
     res.send('Bem-vindo à API DuskPet');
+});
+
+app.get('/health', (req, res) => {
+    res.status(200).json({
+        status: 'ok',
+        uptime: process.uptime(),
+        timestamp: Date.now(),
+        env: process.env.NODE_ENV || 'development'
+    });
 });
 
 app.use('/login', loginLimiter, loginRoute);
