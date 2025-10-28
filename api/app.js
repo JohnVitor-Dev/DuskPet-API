@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
-const path = require('path');
+//const path = require('path');
 const app = express();
 
 app.use(cors());
@@ -47,7 +47,7 @@ const produtosRoute = require('./src/routes/produtosRoute');
 const verifyToken = require('./src/middlewares/verifyToken');
 const verifyCliente = require('./src/middlewares/verifyCliente');
 
-app.use('/public', express.static(path.join(__dirname, '..', 'public')));
+//app.use('/public', express.static(path.join(__dirname, '..', 'public')));
 
 app.use(generalLimiter);
 
